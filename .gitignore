@@ -9,8 +9,10 @@
 **/RemoteSystemsTempFiles
 *.o
 *.out
+*.output
 *.zip
 *.gz
+README.html
 WideCharacters.html
 cmsg
 doxygen_sqlite3.db
@@ -19,6 +21,7 @@ doxygen_sqlite3.db
 config.h
 config.log
 config.status
+Makefile
 stamp-h1
 #
 # automake files included

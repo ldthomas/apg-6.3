@@ -46,7 +46,7 @@ For more details see the documentation or visit the <a href="http://www.coasttoc
 |  DoxyFooter.html             |- documentation footer file|
 |  other                   |- automake files|
 
-Each of the directories Generator, CppDemo, Demo, MEGACO, SIP and WideCharacters has two bash scripts: `tuntests` and `generateGrammars`.
+Each of the directories Generator, CppDemo, Demo, MEGACO, SIP and WideCharacters has two bash scripts: `runtests` and `generateGrammars`.
 `runtests` will run one or more tests on the optimized and debug builds.
 `generateGrammars` will re-generate all of the parser files from the included grammar (.bnf) files. 
 
@@ -62,16 +62,16 @@ cd (repo directory)
 make
 sudo make install
 ```
-This will make all targets (see b) below) and install the optimized version of apg in:
-`/usr/local/bin/apg`
+This will make all targets (see b) below) and install the optimized version of apg in:<br>
+`/usr/local/bin/apg`<br>
 apg is the parser generator. For usage, execute "apg --help".
  
-To change the install location use, for example:
+To change the install location use, for example:<br>
 `./configure --prefix=/mydir` installs to `/mydir/bin/apg`
 
-Note that apg may conflict with a program name already installed (Automated Password Generator, for example.) To change the name of the installed program use, for example:
-`./configure --program-prefix=my` installs `/usr/local/bin/myapg`
-or
+Note that apg may conflict with a program name already installed (Automated Password Generator, for example.) To change the name of the installed program use, for example:  
+`./configure --program-prefix=my` installs `/usr/local/bin/myapg`  
+or  
 `./configure --program-suffix=en` installs `/usr/local/bin/apgen`
  
 <u>b) the build targets:</u>
@@ -85,8 +85,8 @@ or
 |   sip           |    sip_dbg         | extensive timing tests for variously optimized SIP parsers|
 |   wide          |   wide_dbg        | example of using 32-bit wide grammar alphabet characters|
 
-Note that individual programs can be built by specifying the target names. e.g.
-`make apg            ; build only the optimized version of apg`
+Note that individual programs can be built by specifying the target names. e.g.<br>
+`make apg            ; build only the optimized version of apg`<br>
 `make sip sip_dbg    ; build both the optimized and debug versions of the SIP example`
  
 <u>c) (recommended) put all object files and executables in a separate directory:</u>
@@ -105,8 +105,8 @@ cd ../Generator
 ./runtests ../build
 ./generateGrammars ../build
 ```
-<u>d) clean up:</u>
-`make mostlyclean      ; remove all object files but not the executable programs`
+<u>d) clean up:</u><br>
+`make mostlyclean      ; remove all object files but not the executable programs`<br>
 `make maintainer-clean ; remove everything make created`
 
 **Documentation:**  
