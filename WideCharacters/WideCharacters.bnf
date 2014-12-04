@@ -1,0 +1,23 @@
+;
+; Wide Characters Example
+;  Each "line" defines an example of characters from
+;  the UNICODE code charts (http://www.unicode.org/charts/)
+;  Three charts are included in this example - Cherokee, Greek and Cyrillic.
+;  An "error" chart is included to accept any example that has errors
+;  so that the parser may continue to accept the next example.
+;
+UTF32-examples   = 1*((greek-example / cyrillic-example / cherokee-example / error-example) end)
+
+greek-example    = "Greek" 1*greek-char
+greek-char       = %x0370-03ff
+
+cyrillic-example = "Cyrillic" 1*cyrillic-char
+cyrillic-char    = %x0400-04ff
+
+cherokee-example = "Cherokee" 1*cherokee-char
+cherokee-char    = %x13a0-13ff
+
+error-example    = *error-char
+error-char       = %xb-ffffffff / %x0-9
+
+end              = %xa

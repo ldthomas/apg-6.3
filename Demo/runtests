@@ -1,0 +1,45 @@
+cd ..#!/bin/bash
+#
+# Parameter $1 is the directory where the binaries are.
+# (do not include trailing backslash, e.g. ".." not "../"
+#
+# The default assumes the parent directory ..
+#
+# test file name ($1) for existence
+filex(){
+if [ ! -f $1 ]; then
+    echo "error: file $1 not found"
+    return 1
+fi
+return 0
+}
+
+# test Demo ($1)
+test(){
+    echo ""
+    echo "testing \"$1\""
+    $1
+}
+
+# get the parent directory
+if [ "$1" != "" ]; then
+    dir=$1
+else
+    dir=..
+fi
+
+# test release version
+pgm=$dir/demo
+filex $pgm
+if [ "$?" == "0" ]; then
+    test $pgm
+fi    
+
+# test debug version
+pgm=$dir/demo_dbg
+filex $pgm
+if [ "$?" == "0" ]; then
+    test $pgm
+fi    
+
+exit 0

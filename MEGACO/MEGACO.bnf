@@ -1,0 +1,628 @@
+megacoMessage = LWSP [authenticationHeader SEP] message
+authenticationHeader = AuthToken EQUAL SecurityParmIndex COLON
+  SequenceNum COLON AuthData
+SecurityParmIndex = "0x" 8(HEXDIG)
+SequenceNum = "0x" 8(HEXDIG)
+AuthData = "0x" 24*64(HEXDIG)
+Message = MegacopToken SLASH Version SEP mId SEP messageBody
+; The version of the protocol defined here is equal to 3.
+messageBody = (errorDescriptor / transactionList)
+
+transactionList = 1*(transactionRequest     /
+                     transactionReply       /
+                     transactionPending     /
+                     transactionResponseAck /
+                     segmentReply)
+
+transactionRequest = TransToken EQUAL TransactionID LBRKT
+  actionRequest *(COMMA actionRequest) RBRKT
+
+transactionReply = ReplyToken EQUAL TransactionID [SLASH segmentNumber
+  [SLASH SegmentationCompleteToken]] LBRKT
+  [ImmAckRequiredToken COMMA]
+  (errorDescriptor / actionReplyList) RBRKT
+
+transactionPending = PendingToken EQUAL TransactionID LBRKT RBRKT
+
+transactionResponseAck = ResponseAckToken LBRKT transactionAck *(COMMA transactionAck) RBRKT
+
+segmentReply = MessageSegmentToken EQUAL TransactionID SLASH segmentNumber [SLASH SegmentationCompleteToken]
+
+transactionAck = TransactionID / (TransactionID "-" TransactionID)
+actionRequest = CtxToken EQUAL ContextID LBRKT ((contextRequest
+  [COMMA commandRequestList]) /
+  commandRequestList) RBRKT
+contextRequest = ((contextProperties [COMMA contextAudit]) / contextAudit)
+contextProperties = contextProperty *(COMMA contextProperty)
+
+; at-most-once
+; EmergencyOff to be used in MG to MGC direction only in H.248.1 V1 and V2
+; EmergencyToken or EmergencyOffToken, but not both
+contextProperty = (topologyDescriptor / priority / EmergencyOffToken / EmergencyToken / iepsValue /
+  contextAttrDescriptor)
+contextAudit = ContextAuditToken LBRKT (contextAuditProperties
+  *(COMMA contextAuditProperties)) /
+  indAudcontextAttrDescriptor RBRKT
+
+; at-most-once except contextAuditSelector
+contextAuditProperties = (TopologyToken / EmergencyToken /
+  PriorityToken /IEPSToken/ pkgdName /
+  contextAuditSelector)
+
+; at-most-once
+contextAuditSelector = priority / emergencyValue / iepsValue / contextAttrDescriptor / auditSelectLogic
+auditSelectLogic = [ AndAUDITselectToken / OrAUDITselectToken ]
+
+; If empty, AND of selection conditions is assumed.
+indAudcontextAttrDescriptor = ContextAttrToken LBRKT contextAuditProperties
+  *(COMMA contextAuditProperties) RBRKT
+
+; "O-" indicates an optional command
+; "W-" indicates a wildcarded response to a command
+commandRequestList = ["O-"] ["W-"] commandRequest *(COMMA ["O-"] ["W-"] commandRequest)
+commandRequest = (ammRequest / subtractRequest / auditRequest / notifyRequest / serviceChangeRequest)
+
+segmentNumber = UINT16
+actionReplyList = actionReply *(COMMA actionReply)
+actionReply = CtxToken EQUAL ContextID [LBRKT (errorDescriptor /
+  commandReply /(commandReply COMMA
+  errorDescriptor)) RBRKT]
+commandReply = ((contextProperties [COMMA commandReplyList]) / commandReplyList)
+commandReplyList = commandReplys *(COMMA commandReplys)
+commandReplys = (serviceChangeReply / auditReply / ammsReply / notifyReply)
+
+;Add, Move and Modify have the same request parameters
+ammRequest = (AddToken / MoveToken / ModifyToken) EQUAL
+  termIDList [LBRKT ammParameter *(COMMA
+  ammParameter) RBRKT]
+
+;at-most-once
+ammParameter = (mediaDescriptor / modemDescriptor /muxDescriptor /
+  eventsDescriptor / signalsDescriptor /
+  digitMapDescriptor / eventBufferDescriptor /
+  auditDescriptor / statisticsDescriptor)
+ammsReply = (AddToken / MoveToken / ModifyToken / SubtractToken)
+  EQUAL termIDList [LBRKT terminationAudit RBRKT]
+subtractRequest = SubtractToken EQUAL termIDList [LBRKT auditDescriptor RBRKT]
+auditRequest = (AuditValueToken / AuditCapToken) EQUAL termIDList LBRKT auditDescriptor RBRKT
+auditReply = (AuditValueToken / AuditCapToken) (contextTerminationAudit / auditOther)
+auditOther = EQUAL termIDList [LBRKT terminationAudit RBRKT]
+terminationAudit = auditReturnParameter *(COMMA auditReturnParameter)
+contextTerminationAudit = EQUAL CtxToken (terminationIDList / LBRKT errorDescriptor RBRKT)
+auditReturnParameter = (mediaDescriptor / modemDescriptor / muxDescriptor /
+  eventsDescriptor / signalsDescriptor /
+  digitMapDescriptor / observedEventsDescriptor /
+  eventBufferDescriptor / statisticsDescriptor /
+  packagesDescriptor / errorDescriptor /
+  auditReturnItem)
+auditReturnItem = (MuxToken / ModemToken / MediaToken /
+  DigitMapToken / StatsToken / ObservedEventsToken /
+  PackagesToken)
+auditDescriptor = AuditToken LBRKT [auditItem *(COMMA auditItem)] RBRKT
+notifyRequest = NotifyToken EQUAL termIDList LBRKT
+  (observedEventsDescriptor [COMMA errorDescriptor]) RBRKT
+notifyReply = NotifyToken EQUAL termIDList [LBRKT errorDescriptor RBRKT]
+serviceChangeRequest = ServiceChangeToken EQUAL termIDList LBRKT
+  serviceChangeDescriptor RBRKT
+serviceChangeReply = ServiceChangeToken EQUAL termIDList [LBRKT
+  (errorDescriptor / serviceChangeReplyDescriptor) RBRKT]
+errorDescriptor = ErrorToken EQUAL ErrorCode LBRKT [quotedString] RBRKT
+ErrorCode = 1*4(DIGIT) ; could be extended
+TransactionID = UINT32
+mId = ((domainAddress / domainName) [":" portNumber]) /
+  mtpAddress / deviceName
+
+; ABNF allows two or more consecutive "." although it is meaningless
+; in a domain name.
+domainName = "<" (ALPHA / DIGIT) *63(ALPHA / DIGIT / "-" / ".") ">"
+deviceName = pathNAME
+
+;The values 0x0, 0xFFFFFFFE and 0xFFFFFFFF are reserved.
+;'-' is used for NULL context. '*' is ALL. '$' is CHOOSE.
+ContextID = (UINT32 / "*" / "-" / "$")
+domainAddress = "[" (IPv4address / IPv6address) "]"
+
+;RFC 2373 contains the definition of IPv6 addresses.
+IPv6address = hexpart [":" IPv4address]
+IPv4address = V4hex DOT V4hex DOT V4hex DOT V4hex
+V4hex = 1*3(DIGIT) ; "0".."255"
+
+; this production, while occurring in RFC 2373, is not referenced
+; IPv6prefix = hexpart SLASH 1*2DIGIT
+hexpart = hexseq "::" [hexseq] / "::" [hexseq] / hexseq
+hexseq = hex4 *(":" hex4)
+hex4 = 1*4HEXDIG
+portNumber = UINT16
+
+; Addressing structure of mtpAddress:
+; 25 - 15 0
+; | PC | NI |
+; 24 - 14 bits 2 bits
+; NOTE : 14 bits are defined for international use.
+; Two national options exist where the point code is 16 or 24 bits.
+; To octet align the mtpAddress the MSBs shall be encoded as 0s.
+; An octet shall be represented by 2 hex digits.
+; LDT: fixed 6/7/2011: original: mtpAddress = MTPToken LBRKT 4*8(HEXDIG) RBRKT
+mtpAddress = MTPToken LBRKT 4*8(HEXDIG) LWSP "}"
+termIDList = (TerminationID / LSBRKT TerminationID 1*(COMMA TerminationID) RSBRKT)
+terminationIDList = LBRKT TerminationID *(COMMA TerminationID) RBRKT
+
+; Total length of pathNAME must not exceed 64 chars.
+pathNAME = ["*"] NAME *("/" / "*"/ ALPHA / DIGIT /"_" / "$") ["@" pathDomainName]
+
+; ABNF allows two or more consecutive "." although it is meaningless
+; in a path domain name.
+pathDomainName = (ALPHA / DIGIT / "*") *63(ALPHA / DIGIT / "-" / "*" / ".")
+
+; '*' is ALL. '$' is CHOOSE.
+; LDT 07/19/07: "ROOT" is also a pathNAME and is not otherwise distinguished
+;                The ambiguity cannot be resolved with FSD and rearrangement of the order.
+;TerminationID = "ROOT" / pathNAME / "$" / "*"
+TerminationID = pathNAME / "$" / "*"
+mediaDescriptor = MediaToken LBRKT mediaParm *(COMMA mediaParm) RBRKT
+
+; at-most one terminationStateDescriptor
+; and either streamParm(s) or streamDescriptor(s) but not both
+mediaParm = (streamParm / streamDescriptor / terminationStateDescriptor)
+
+; at-most-once per item
+streamParm = (localDescriptor / remoteDescriptor / localControlDescriptor / statisticsDescriptor)
+streamDescriptor = StreamToken EQUAL StreamID LBRKT streamParm *(COMMA streamParm) RBRKT
+localControlDescriptor = LocalControlToken LBRKT localParm *(COMMA localParm) RBRKT
+
+; at-most-once per item except for propertyParm
+localParm = (streamMode / propertyParm / reservedValueMode / reservedGroupMode)
+reservedValueMode = ReservedValueToken EQUAL ("ON" / "OFF")
+reservedGroupMode = ReservedGroupToken EQUAL ("ON" / "OFF")
+streamMode = ModeToken EQUAL streamModes
+streamModes = (SendonlyToken / RecvonlyToken / SendrecvToken / InactiveToken / LoopbackToken)
+propertyParm = pkgdName parmValue
+
+; the (Safe)Char '$' means CHOOSE
+; the (Safe)Char '*' means ALL
+parmValue = (EQUAL alternativeValue / INEQUAL VALUE)
+alternativeValue = (VALUE
+  / LSBRKT VALUE *(COMMA VALUE) RSBRKT
+  ; sublist (i.e., A AND B AND ...)
+  / LBRKT VALUE *(COMMA VALUE) RBRKT
+  ; alternatives (i.e., A OR B OR ...)
+  / LSBRKT VALUE COLON VALUE RSBRKT)
+  ; range
+INEQUAL = LWSP (">" / "<" / "#") LWSP ; '#' means "not equal"
+LSBRKT = LWSP "[" LWSP
+RSBRKT = LWSP "]" LWSP
+
+; NOTE : The octet zero is not among the permitted characters in octet
+; string. As the current definition is limited to SDP, and a zero octet
+; would not be a legal character in SDP, this is not a concern.
+localDescriptor = LocalToken LBRKT octetString RBRKT
+remoteDescriptor = RemoteToken LBRKT octetString RBRKT
+eventBufferDescriptor = EventBufferToken [LBRKT eventSpec *(COMMA eventSpec) RBRKT]
+eventSpec = pkgdName [LBRKT eventSpecParameter *(COMMA eventSpecParameter) RBRKT]
+eventSpecParameter = (eventStream / eventOther)
+eventBufferControl = BufferToken EQUAL eventBufferControlValue
+eventBufferControlValue = ("OFF" / LockStepToken)
+terminationStateDescriptor = TerminationStateToken LBRKT terminationStateParm
+  *(COMMA terminationStateParm) RBRKT
+
+; at-most-once per item except for propertyParm
+terminationStateParm = (propertyParm / serviceStates / eventBufferControl)
+serviceStates = ServiceStatesToken EQUAL serviceStatesValue
+serviceStatesValue = (TestToken / OutOfSvcToken / InSvcToken)
+muxDescriptor = MuxToken EQUAL MuxType terminationIDList
+MuxType = (H221Token / H223Token / H226Token / V76Token / extensionParameter / Nx64kToken)
+StreamID = UINT16
+pkgdName = (PackageName SLASH ItemID) ;specific item
+  / (PackageName SLASH "*") ;all items in package
+  / ("*" SLASH "*") ; all items supported by the MG
+PackageName = NAME
+ItemID = NAME
+eventsDescriptor = EventsToken [EQUAL RequestID LBRKT requestedEvent
+  *(COMMA requestedEvent) RBRKT]
+requestedEvent = pkgdName [LBRKT eventParameter *(COMMA eventParameter) RBRKT]
+notifyRegulated = NotifyRegulatedToken [LBRKT (embedWithSig/ embedNoSig) RBRKT]
+notifyBehaviour = NeverNotifyToken / NotifyImmediateToken / notifyRegulated
+
+; at-most-once each of KeepActiveToken, notifyBehaviour,eventDM,
+; ResetEventsDescriptor and eventStream
+; at most one of either embedWithSig or embedNoSig but not both
+; KeepActiveToken and embedWithSig must not both be present
+eventParameter = (embedWithSig / embedNoSig / KeepActiveToken /
+  eventDM / eventStream / eventOther /
+  notifyBehaviour / ResetEventsDescriptorToken)
+embedWithSig = EmbedToken LBRKT signalsDescriptor [COMMA embedFirst] RBRKT
+embedNoSig = EmbedToken LBRKT embedFirst RBRKT
+
+; at-most-once of each
+embedFirst = EventsToken [EQUAL RequestID LBRKT
+  secondRequestedEvent *(COMMA secondRequestedEvent) RBRKT]
+secondRequestedEvent = pkgdName [LBRKT secondEventParameter *(COMMA
+  secondEventParameter) RBRKT]
+
+; at-most-once each of embedSig, KeepActiveToken, notifyBehaviour,eventDM
+; ResetEventsDescriptor or eventStream
+; KeepActiveToken and embedSig must not both be present
+secondEventParameter = (embedSig / KeepActiveToken / eventDM /
+  eventStream / eventOther / notifyBehaviour /
+  ResetEventsDescriptorToken)
+embedSig = EmbedToken LBRKT signalsDescriptor RBRKT
+eventStream = StreamToken EQUAL StreamID
+eventOther = eventParameterName parmValue
+eventParameterName = NAME
+eventDM = DigitMapToken EQUAL ((digitMapName) / (LBRKT digitMapValue RBRKT))
+signalsDescriptor = SignalsToken [LBRKT signalParm *(COMMA signalParm) RBRKT]
+signalParm = signalList / signalRequest
+signalRequest = signalName [LBRKT sigParameter *(COMMA sigParameter) RBRKT]
+signalList = SignalListToken EQUAL signalListId LBRKT
+  signalListParm *(COMMA signalListParm) RBRKT
+signalListId = UINT16
+
+;exactly once signalType, at most once duration and every signal
+;parameter
+signalListParm = signalRequest
+signalName = pkgdName
+
+;at-most-once sigStream, at-most-once sigSignalType,
+;at-most-once sigDuration, at-most-once sigDirection,
+;at-most-once sigRequestID, at-most-once sigIntsigDelay
+;every signalParameterName at most once
+sigParameter = sigStream / sigSignalType / sigDuration / sigOther /
+  notifyCompletion / KeepActiveToken /
+  sigDirection / sigRequestID / sigIntsigDelay
+sigStream = StreamToken EQUAL StreamID
+sigOther = sigParameterName parmValue
+sigParameterName = NAME
+sigSignalType = SignalTypeToken EQUAL signalType
+signalType = (OnOffToken / TimeOutToken / BriefToken)
+sigDuration = DurationToken EQUAL UINT16
+sigDirection = DirectionToken EQUAL direction
+direction = ExternalToken / InternalToken / BothToken
+sigRequestID = RequestIDToken EQUAL RequestID
+sigIntsigDelay = IntsigDelayToken EQUAL UINT16
+notifyCompletion = NotifyCompletionToken EQUAL (LBRKT
+  notificationReason *(COMMA notificationReason) RBRKT)
+notificationReason = TimeOutToken / InterruptByEventToken /
+  InterruptByNewSignalsDescrToken / OtherReasonToken /
+  IterationToken
+observedEventsDescriptor = ObservedEventsToken EQUAL RequestID LBRKT
+  observedEvent *(COMMA observedEvent) RBRKT
+
+; time per event, because it might be buffered
+observedEvent = [TimeStamp LWSP COLON] LWSP pkgdName [LBRKT
+  observedEventParameter *(COMMA
+  observedEventParameter) RBRKT]
+
+; at-most-once eventStream, every eventParameterName at most once
+observedEventParameter = eventStream / eventOther
+
+; For an AuditCapReply with all events, the RequestID should be ALL.
+RequestID = UINT32 / "*"
+modemDescriptor = ModemToken ((EQUAL modemType) / (LSBRKT modemType
+  *(COMMA modemType) RSBRKT)) [LBRKT propertyParm
+  *(COMMA propertyParm) RBRKT]
+
+; at-most-once except for extensionParameter
+modemType = V32bisToken / V22bisToken / V18Token / V22Token /
+  V32Token / V34Token / V90Token / V91Token /
+  SynchISDNToken / extensionParameter
+digitMapDescriptor = DigitMapToken EQUAL ((LBRKT digitMapValue RBRKT) /
+  (digitMapName [LBRKT digitMapValue RBRKT]))
+digitMapName = NAME
+digitMapValue = ["T" COLON Timer COMMA] ["S" COLON Timer COMMA] ["L"
+  COLON Timer COMMA] ["Z" COLON Timer COMMA] digitMap
+Timer = 1*2DIGIT
+
+; Units are seconds for T, S, and L timers, and hundreds of
+; milliseconds for Z timer. Thus T, S, and L range from 1 to 99
+; seconds and Z from 100 ms to 9.9 s
+digitMap = (digitString / LWSP "(" LWSP digitStringList LWSP ")" LWSP)
+digitStringList = digitString *(LWSP "|" LWSP digitString)
+digitString = 1*(digitStringElement)
+digitStringElement = digitPosition [DOT]
+digitPosition = digitMapLetter / digitMapRange
+digitMapRange = ("x" / (LWSP "[" LWSP digitLetter LWSP "]" LWSP))
+digitLetter = *((DIGIT "-" DIGIT) / digitMapLetter)
+digitMapLetter = DIGIT ;Basic event symbols
+  / %x41-4B / %x61-6B ; a-k, A-K
+  / "L" / "S" / "T" ;Inter-event timers
+  ; (long, short, start)
+  / "Z" ;Long duration modifier
+
+; at-most-once, and DigitMapToken and PackagesToken are not allowed
+; in AuditCapabilities command
+auditItem = auditReturnItem / SignalsToken / EventBufferToken /
+  EventsToken / indAudterminationAudit
+indAudterminationAudit = indAudauditReturnParameter *(COMMA indAudauditReturnParameter)
+indAudauditReturnParameter = indAudmediaDescriptor / indAudeventsDescriptor /
+  indAudsignalsDescriptor /
+  indAuddigitMapDescriptor /
+  indAudeventBufferDescriptor /
+  indAudstatisticsDescriptor /
+  indAudpackagesDescriptor
+indAudmediaDescriptor = MediaToken LBRKT indAudmediaParm *(COMMA
+  indAudmediaParm) RBRKT
+
+; either streamParm or streamDescriptor but not both
+indAudmediaParm = indAudstreamParm / indAudstreamDescriptor /
+  indAudterminationStateDescriptor
+
+; at-most-once
+indAudstreamParm = (indAudlocalControlDescriptor /
+  indAudstatisticsDescriptor /
+  indAudremoteDescriptor / indAudlocalDescriptor )
+indAudremoteDescriptor = RemoteToken LBRKT octetString RBRKT
+indAudlocalDescriptor = LocalToken LBRKT octetString RBRKT
+indAudstreamDescriptor = StreamToken EQUAL StreamID LBRKT indAudstreamParm RBRKT
+indAudlocalControlDescriptor = LocalControlToken LBRKT indAudlocalParm
+  *(COMMA indAudlocalParm) RBRKT
+
+; at-most-once per item
+indAudlocalParm = ModeToken [(EQUAL/INEQUAL) streamModes]/ pkgdName /
+  propertyParm / ReservedValueToken /
+  ReservedGroupToken
+
+; propertyparm and streamModes are used only to specify audit selection
+; criteria. AND/OR selection logic is specified at context level.
+
+indAudterminationStateDescriptor = TerminationStateToken LBRKT
+  indAudterminationStateParm RBRKT
+
+; at-most-once per item
+indAudterminationStateParm = pkgdName / propertyParm / ServiceStatesToken
+  [(EQUAL/INEQUAL) serviceStatesValue ] / BufferToken
+
+; When values are included a Select operation is implied.
+; AND/OR logic is specified at context level.
+indAudeventBufferDescriptor = EventBufferToken LBRKT indAudeventSpec RBRKT
+indAudeventSpec = pkgdName [LBRKT indAudeventSpecParameter RBRKT]
+indAudeventSpecParameter= eventStream / eventParameterName
+indAudeventsDescriptor = EventsToken [EQUAL RequestID] LBRKT indAudrequestedEvent RBRKT
+indAudrequestedEvent = pkgdName
+indAudsignalsDescriptor = SignalsToken LBRKT [indAudsignalParm] RBRKT
+indAudsignalParm = indAudsignalList / indAudsignalRequest
+indAudsignalRequest = signalName [LBRKT indAudsignalRequestParm
+  *(COMMA indAudsignalRequestParm) RBRKT]
+indAudsignalRequestParm = sigStream / sigRequestID
+indAudsignalList = SignalListToken EQUAL signalListId [LBRKT
+  indAudsignalListParm RBRKT]
+indAudsignalListParm = indAudsignalRequest
+indAuddigitMapDescriptor= DigitMapToken EQUAL (digitMapName)
+indAudstatisticsDescriptor = StatsToken LBRKT pkgdName RBRKT
+indAudpackagesDescriptor= PackagesToken LBRKT packagesItem RBRKT
+serviceChangeDescriptor = ServicesToken LBRKT serviceChangeParm *(COMMA
+  serviceChangeParm) RBRKT
+
+; each parameter at-most-once, except auditItem
+; at most one of either serviceChangeAddress or serviceChangeMgcId but
+; not both
+; serviceChangeMethod and serviceChangeReason are REQUIRED
+serviceChangeParm = serviceChangeMethod / serviceChangeReason /
+  serviceChangeDelay / serviceChangeAddress /
+  serviceChangeProfile / extension / TimeStamp /
+  serviceChangeMgcId / serviceChangeVersion /
+  ServiceChangeIncompleteToken / auditItem
+serviceChangeReplyDescriptor = ServicesToken LBRKT servChgReplyParm *(COMMA
+  servChgReplyParm) RBRKT
+
+; at-most-once. Version is REQUIRED on first ServiceChange response
+; at most one of either serviceChangeAddress or serviceChangeMgcId but
+; not both
+
+servChgReplyParm = serviceChangeAddress / serviceChangeMgcId /
+  serviceChangeProfile / serviceChangeVersion / TimeStamp
+serviceChangeMethod = MethodToken EQUAL (FailoverToken / ForcedToken /
+  GracefulToken / RestartToken / DisconnectedToken /
+  HandOffToken / extensionParameter)
+
+; A serviceChangeReason consists of a numeric reason code
+; and an optional text description.
+; A serviceChangeReason must be encoded using the quotedString
+; form of VALUE.
+; The quotedString shall contain a decimal reason code,
+; optionally followed by a single space character and a
+; textual description string.
+serviceChangeReason = ReasonToken EQUAL VALUE
+serviceChangeDelay = DelayToken EQUAL UINT32
+serviceChangeAddress = ServiceChangeAddressToken EQUAL (mId / portNumber)
+serviceChangeMgcId = MgcIdToken EQUAL mId
+serviceChangeProfile = ProfileToken EQUAL NAME SLASH Version
+serviceChangeVersion = VersionToken EQUAL Version
+extension = extensionParameter parmValue
+packagesDescriptor = PackagesToken LBRKT packagesItem *(COMMA packagesItem) RBRKT
+Version = 1*2(DIGIT)
+packagesItem = NAME "-" UINT16
+TimeStamp = Date "T" Time ; per ISO 8601:2004
+
+; Date = yyyymmdd
+Date = 8(DIGIT)
+
+; Time = hhmmssss
+Time = 8(DIGIT)
+statisticsDescriptor = StatsToken LBRKT statisticsParameter *(COMMA
+  statisticsParameter) RBRKT
+
+;at-most-once per item
+statisticsParameter = pkgdName [EQUAL VALUE /
+  (LSBRKT VALUE *(COMMA VALUE) RSBRKT)]
+topologyDescriptor = TopologyToken LBRKT topologyTriple *(COMMA
+  topologyTriple) RBRKT
+topologyTriple = terminationA COMMA terminationB COMMA
+  topologyDirection [COMMA eventStream]
+terminationA = TerminationID
+terminationB = TerminationID
+topologyDirection = BothwayToken / IsolateToken / OnewayToken /
+  OnewayExternalToken / OnewayBothToken
+
+priority = PriorityToken EQUAL UINT16
+iepsValue = IEPSToken EQUAL ("ON" / "OFF")
+emergencyValue = EmergencyValueToken EQUAL (EmergencyToken / EmergencyOffToken)
+contextAttrDescriptor = ContextAttrToken LBRKT (contextIdList /
+  propertyParm *(COMMA propertyParm)) RBRKT
+
+; When using the contextIdList construct, the ContextID in the
+; actionReply construct shall be the same as the ContextID in the
+; associated actionRequest
+contextIdList = ContextListToken EQUAL LBRKT ContextID *(COMMA ContextID) RBRKT
+extensionParameter = "X" ("-" / "+") 1*6(ALPHA / DIGIT)
+
+; octetString is used to describe SDP defined in RFC 2327.
+; Caution should be taken if CRLF in RFC 2327 is used.
+; To be safe, use EOL in this ABNF.
+; Whenever "}" appears in SDP, it is escaped by "\", e.g., "\}"
+octetString = *(nonEscapeChar)
+nonEscapeChar = ("\}" / %x01-7C / %x7E-FF)
+
+; NOTE : The double-quote character is not allowed in quotedString.
+quotedString = DQUOTE *(SafeChar / EOL / %x80-FF / RestChar / WSP) DQUOTE
+UINT16 = 1*5(DIGIT) ; %x0-FFFF
+UINT32 = 1*10(DIGIT) ; %x0-FFFFFFFF
+NAME = ALPHA *63(ALPHA / DIGIT / "_")
+VALUE = quotedString / 1*(SafeChar / %x80-FF)
+SafeChar = DIGIT / ALPHA / "+" / "-" / "&" /
+  "!" / "_" / "/" / "'" / "?" / "@" /
+  "^" / "`" / "~" / "*" / "$" / "\" /
+  "(" / ")" / "%" / "|" / "."
+EQUAL = LWSP %x3D LWSP ; "="
+COLON = %x3A ; ":"
+LBRKT = LWSP %x7B LWSP ; "{"
+RBRKT = LWSP %x7D LWSP ; "}"
+COMMA = LWSP %x2C LWSP ; ","
+DOT = %x2E ; "."
+SLASH = %x2F ; "/"
+ALPHA = %x41-5A / %x61-7A ; A-Z / a-z
+DIGIT = %x30-39 ; 0-9
+DQUOTE = %x22 ; " (Double Quote)
+HEXDIG = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+SP = %x20 ; space
+HTAB = %x09 ; horizontal tab
+CR = %x0D ; Carriage return
+LF = %x0A ; linefeed
+LWSP = *(WSP / COMMENT / EOL)
+EOL = (CR [LF] / LF)
+WSP = SP / HTAB ; white space
+SEP = (WSP / EOL / COMMENT) LWSP
+COMMENT = ";" *(SafeChar/ RestChar / WSP / %x22) EOL
+RestChar = ";" / "[" / "]" / "{" / "}" / ":" / "," / "#" / "<" / ">" / "="
+
+; New Tokens added to sigParameter must take the format of SPA*
+; * may be of any form i.e., SPAM
+; New Tokens added to eventParameter must take the form of EPA*
+; * may be of any form i.e., EPAD
+AddToken = ("Add" / "A")
+AndAUDITSelectToken = ("ANDLgc")
+AuditToken = ("Audit" / "AT")
+AuditCapToken = ("AuditCapability" / "AC")
+AuditValueToken = ("AuditValue" / "AV")
+AuthToken = ("Authentication" / "AU")
+BothToken = ("Both" / "B")
+BothwayToken = ("Bothway" / "BW")
+BriefToken = ("Brief" / "BR")
+BufferToken = ("Buffer" / "BF")
+CtxToken = ("Context" / "C")
+ContextAuditToken = ("ContextAudit" / "CA")
+ContextAttrToken = ("ContextAttr" / "CT")
+ContextListToken = ("ContextList" / "CLT")
+DigitMapToken = ("DigitMap" / "DM")
+DirectionToken = ("SPADirection" / "SPADI")
+DisconnectedToken = ("Disconnected" / "DC")
+DelayToken = ("Delay" / "DL")
+DurationToken = ("Duration" / "DR")
+EmbedToken = ("Embed" / "EM")
+EmergencyToken = ("Emergency" / "EG")
+EmergencyOffToken = ("EmergencyOff" / "EGO")
+EmergencyValueToken = ("EmergencyValue" / "EGV")
+ErrorToken = ("Error" / "ER")
+EventBufferToken = ("EventBuffer" / "EB")
+EventsToken = ("Events" / "E")
+ExternalToken = ("External" / "EX")
+FailoverToken = ("Failover" / "FL")
+ForcedToken = ("Forced" / "FO")
+GracefulToken = ("Graceful" / "GR")
+H221Token = ("H221")
+H223Token = ("H223")
+H226Token = ("H226")
+HandOffToken = ("HandOff" / "HO")
+IEPSToken = ("IEPSCall" / "IEPS")
+ImmAckRequiredToken = ("ImmAckRequired" / "IA")
+InactiveToken = ("Inactive" / "IN")
+InternalToken = ("Internal" / "IT")
+IntsigDelayToken = ("Intersignal" / "SPAIS")
+IsolateToken = ("Isolate" / "IS")
+InSvcToken = ("InService" / "IV")
+InterruptByEventToken = ("IntByEvent" / "IBE")
+InterruptByNewSignalsDescrToken = ("IntBySigDescr" / "IBS")
+IterationToken = ("Iteration" / "IR")
+KeepActiveToken = ("KeepActive" / "KA")
+LocalToken = ("Local" / "L")
+LocalControlToken = ("LocalControl" / "O")
+LockStepToken = ("LockStep" / "SP")
+LoopbackToken = ("Loopback" / "LB")
+MediaToken = ("Media" / "M")
+MegacopToken = ("MEGACO" / "!")
+MessageSegmentToken = ("Segment" / "SM")
+MethodToken = ("Method" / "MT")
+MgcIdToken = ("MgcIdToTry" / "MG")
+ModeToken = ("Mode" / "MO")
+ModifyToken = ("Modify" / "MF")
+ModemToken = ("Modem" / "MD")
+MoveToken = ("Move" / "MV")
+MTPToken = ("MTP")
+MuxToken = ("Mux" / "MX")
+NeverNotifyToken = ("NeverNotify" / "NBNN")
+NotifyToken = ("Notify" / "N")
+NotifyCompletionToken = ("NotifyCompletion" / "NC")
+NotifyImmediateToken = ("ImmediateNotify" / "NBIN")
+NotifyRegulatedToken = ("RegulatedNotify" / "NBRN")
+Nx64kToken = ("Nx64Kservice" / "N64")
+ObservedEventsToken = ("ObservedEvents" / "OE")
+OnewayToken = ("Oneway" / "OW")
+OnewayBothToken = ("OnewayBoth" / "OWB")
+OnewayExternalToken = ("OnewayExternal" / "OWE")
+OnOffToken = ("OnOff" / "OO")
+OrAUDITselectToken = ("ORLgc")
+OtherReasonToken = ("OtherReason" / "OR")
+OutOfSvcToken = ("OutOfService" / "OS")
+PackagesToken = ("Packages" / "PG")
+PendingToken = ("Pending" / "PN")
+PriorityToken = ("Priority" / "PR")
+ProfileToken = ("Profile" / "PF")
+ReasonToken = ("Reason" / "RE")
+RecvonlyToken = ("ReceiveOnly" / "RC")
+ReplyToken = ("Reply" / "P")
+ResetEventsDescriptorToken = ("ResetEventsDescriptor" / "RSE")
+RestartToken = ("Restart" / "RS")
+RemoteToken = ("Remote" / "R")
+RequestIDToken = ("SPARequestID" / "SPARQ")
+ReservedGroupToken = ("ReservedGroup" / "RG")
+ReservedValueToken = ("ReservedValue" / "RV")
+SegmentationCompleteToken = ("END" / "&")
+SendonlyToken = ("SendOnly" / "SO")
+SendrecvToken = ("SendReceive" / "SR")
+ServicesToken = ("Services" / "SV")
+ServiceStatesToken = ("ServiceStates" / "SI")
+ServiceChangeIncompleteToken = ("ServiceChangeInc" / "SIC")
+ServiceChangeToken = ("ServiceChange" / "SC")
+ServiceChangeAddressToken = ("ServiceChangeAddress" / "AD")
+SignalListToken = ("SignalList" / "SL")
+SignalsToken = ("Signals" / "SG")
+SignalTypeToken = ("SignalType" / "SY")
+StatsToken = ("Statistics" / "SA")
+StreamToken = ("Stream" / "ST")
+SubtractToken = ("Subtract" / "S")
+SynchISDNToken = ("SynchISDN" / "SN")
+TerminationStateToken = ("TerminationState" / "TS")
+TestToken = ("Test" / "TE")
+TimeOutToken = ("TimeOut" / "TO")
+TopologyToken = ("Topology" / "TP")
+TransToken = ("Transaction" / "T")
+ResponseAckToken = ("TransactionResponseAck" / "K")
+V18Token = ("V18")
+V22Token = ("V22")
+V22bisToken = ("V22b")
+V32Token = ("V32")
+V32bisToken = ("V32b")
+V34Token = ("V34")
+V76Token = ("V76")
+V90Token = ("V90")
+V91Token = ("V91")
+VersionToken = ("Version" / "V")

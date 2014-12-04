@@ -1,0 +1,28 @@
+MEGACO/1 [125.125.125.111]:55555 Reply = 50009
+{
+ Context = 5000
+ {
+  Subtract = A5555
+  {
+   Statistics
+   {
+    nt/os=45123, ; Octets Sent
+    nt/dur=40 ; in seconds
+   }
+  },
+  Subtract = A5556
+  {
+   Statistics
+   {
+    rtp/ps=1245, ; packets sent
+    nt/os=62345, ; octets sent
+    rtp/pr=780, ; packets received
+    nt/or=45123, ; octets received
+    rtp/pl=10, ;  % packets lost
+    rtp/jit=27,
+    rtp/delay=48 ; average latency
+   }
+  }
+ }
+}
+

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title></title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <!--[if lt IE 9]>
+    <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+</head>
+<body>
+<h2 id="apg---an-abnf-parser-generator">APG - An ABNF Parser Generator</h2>
+<p><strong>Version:</strong> 6.3</p>
+<p><strong>Description:</strong></p>
+<ul><li><b>APG</b> is an acronym for "ABNF Parser Generator"
+</li>
+<li>generates parsers in C or C++
+</li>
+<li>generates language parsers and translators from a superset of the Augmented Backus-Naur Form (ABNF <a href="https://tools.ietf.org/html/rfc5234">RFC5234</a>) grammar syntax
+</li>
+<li>accepts valid ABNF grammars
+</li>
+<li>accepts <code>AND</code> & <code>NOT</code> syntactic predicate operators for conditional parsing based on specified, look-ahead phrases
+</li>
+<li>accepts User-Defined Terminals (UDTs) which allow user-written, non-Context-Free phrase recognition operators
+</li>
+<li>runs on both 32- and 64-bit operating systems
+</li>
+<li>input language strings may be represented with 8-, 16-, 32- or 64-bit character codes
+</li>
+<li>user-written callback functions provide complete monitoring and flow control of the parser</li>
+<li>optional generation of an Abstract Syntax Tree (AST)</li>
+<li>translation of the AST with user-written callback functions</li>
+<li>extensive tracing facilities</li>
+<li>statistics gathering for a full picture of parse tree node coverage</li>
+<li>extensive attribute generation for an overview of the grammar's characteristics</li>
+</ul>
+<p>For more details see the documentation or visit the <a href="http://www.coasttocoastresearch.com">APG website</a>.</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">directories/files:</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">ApgLib/</td>
+<td style="text-align: left;">- the APG runtime library, required by the generator and all generated parsers</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ApgUtilities/</td>
+<td style="text-align: left;">- optional but useful utilities, especially for formatted display of APG's data structures</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Generator/</td>
+<td style="text-align: left;">- the main() function here is the parser generator</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CppDemo/</td>
+<td style="text-align: left;">- example of how to set up and run a C++ parser</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Demo/</td>
+<td style="text-align: left;">- a simple example which demonstrates most of the APG features including UDTs</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MEGACO/</td>
+<td style="text-align: left;">- a C++ parser for the Media Gateway Control protocol (<a href="http://www.ietf.org/rfc/rfc3525.txt?number=3525">RFC3525</a>)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SIP/</td>
+<td style="text-align: left;">- an extensive timing test demonstrating the power of UDTs for the Session Initiation Protocol (<a href="https://www.ietf.org/rfc/rfc3261.txt">RFC3261</a>)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">WideCharacters/</td>
+<td style="text-align: left;">- demonstrates parsing 32-bit character coded input strings</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LICENSE</td>
+<td style="text-align: left;">- Version 2 of the GNU General Public License</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">README.md</td>
+<td style="text-align: left;">- this file</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Doxyfile</td>
+<td style="text-align: left;">- documentation generation (Doxygen) configuration file</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">DoxyHeader.html</td>
+<td style="text-align: left;">- documentation header file</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DoxyFooter.html</td>
+<td style="text-align: left;">- documentation footer file</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">other</td>
+<td style="text-align: left;">- automake files</td>
+</tr>
+</tbody>
+</table>
+<p>Each of the directories Generator, CppDemo, Demo, MEGACO, SIP and WideCharacters has two bash scripts: <code>tuntests</code> and <code>generateGrammars</code>.<br /><code>runtests</code> will run one or more tests on the optimized and debug builds.<br /><code>generateGrammars</code> will re-generate all of the parser files from the included grammar (.bnf) files.</p>
+<p><strong>Linux Installation:</strong></p>
+<p>The automake installation uses the &quot;subdir-objects&quot; option. This option has changed with automake &gt;=1.14. It is recommended with version 1.14 and will be mandatory in automake 2.0. Consequently, APG and the examples are now built with a single Makefile.am file and recursion into subdirectories has been eliminated. This has the feature of putting all of the object files in the same directories where the respective the source files reside. A couple of tricks will be demonstrated here to get rid of the clutter if you find this annoying.</p>
+<p><u>a) the basic build:</u></p>
+<pre><code>clone or unzip apg-6.3
+cd (repo directory)
+./configure
+make
+sudo make install</code></pre>
+<p>This will make all targets (see b) below) and install the optimized version of apg in:<br /><code>/usr/local/bin/apg</code><br />apg is the parser generator. For usage, execute &quot;apg --help&quot;.</p>
+<p>To change the install location use, for example:<br /><code>./configure --prefix=/mydir</code> installs to <code>/mydir/bin/apg</code></p>
+<p>Note that apg may conflict with a program name already installed (Automated Password Generator, for example.) To change the name of the installed program use, for example:<br /><code>./configure --program-prefix=my</code> installs <code>/usr/local/bin/myapg</code><br />or<br /><code>./configure --program-suffix=en</code> installs <code>/usr/local/bin/apgen</code></p>
+<p><u>b) the build targets:</u></p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">optimized target</th>
+<th style="text-align: left;">debug target</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">apg</td>
+<td style="text-align: left;">apg_dbg</td>
+<td style="text-align: left;">APG - the ABNF Parser Generator</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">cppdemo</td>
+<td style="text-align: left;">cppdemo_dbg</td>
+<td style="text-align: left;">basic demonstration of building and using a C++ parser</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">demo</td>
+<td style="text-align: left;">demo_dbg</td>
+<td style="text-align: left;">basic demonstration of most of the APG features</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">megaco</td>
+<td style="text-align: left;">megaco_dbg</td>
+<td style="text-align: left;">sample C++, MEGAGO parser</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sip</td>
+<td style="text-align: left;">sip_dbg</td>
+<td style="text-align: left;">extensive timing tests for variously optimized SIP parsers</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">wide</td>
+<td style="text-align: left;">wide_dbg</td>
+<td style="text-align: left;">example of using 32-bit wide grammar alphabet characters</td>
+</tr>
+</tbody>
+</table>
+<p>Note that individual programs can be built by specifying the target names. e.g.<br /><code>make apg            ; build only the optimized version of apg</code><br /><code>make sip sip_dbg    ; build both the optimized and debug versions of the SIP example</code></p>
+<p><u>c) (recommended) put all object files and executables in a separate directory:</u></p>
+<pre><code>clone or unzip apg-6.3
+cd (repo directory)
+mkdir build
+cd build
+../configure
+make
+sudo make install</code></pre>
+<p>When using this configuration it will be necessary to supply the build directory as a parameter to the test scripts, <code>runtests</code> and <code>generateGrammars</code>, that exist in each target directory. For example, with the build above, to test the generator (apg)</p>
+<pre><code>cd ../Generator
+./runtests ../build
+./generateGrammars ../build</code></pre>
+<p><u>d) clean up:</u><br /><code>make mostlyclean      ; remove all object files but not the executable programs</code><br /><code>make maintainer-clean ; remove everything make created</code></p>
+<p><strong>Documentation:</strong><br />Install <a href="http://www.stack.nl/~dimitri/doxygen/index.html">Doxygen</a>. From the repo directory run<br /><code>doxygen</code><br />Open <code>./documentation/index.html</code> in any web browser. Or visit the <a href="http://www.coasttocoastresearch.com">APG website</a>.</p>
+<p><strong>Copyright:</strong><br /> <em>Copyright © 2005 - 2012 Lowell D. Thomas, all rights reserved</em></p>
+<p><strong>License:</strong><br /> APG Version 6.3 is released under Version 2.0 or higher of the<br /> <a href="https://www.gnu.org/licenses/licenses.html">GNU General Public License</a>.</p>
+</body>
+</html>

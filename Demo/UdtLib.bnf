@@ -1,0 +1,25 @@
+;
+; Demo Grammar - refers to all items in UdtLib
+; NOTES:
+;  1. u_wsp and e_owsp include space and tab only - line continuations and comments are not included
+;  2. alphanum, alphanum with hyphens and alphanum with underscore cannot be alternates,
+;       since either of the extra character types overlap the phrase space of the others.
+;       That is "name" will be recognized by either of the extra character types as a valid phrase.
+;  3. Line must appear in threes - Line, LineHyphen and LineUnder.
+;       This is an artificial construction simple to test and illustrate the different alphanum types. 
+;  4. Quotes are likewise a foursome of single, double and 2xeither in order to test them all
+;       without disambiguation problems.
+;
+File			= 1*(BlankLine / Comment / Line / LineError)
+BlankLine		= e_owsp u_LineEnd
+Comment			= (u_CComment / u_CppComment / u_SemiComment) u_LineEnd
+Line			= LineAlpha LineHyphen LineUnder
+LineAlpha		= LineNameAlpha e_owsp DefinedAs e_owsp (u_SingleQuotedString / (Number *(u_wsp Number))) e_owsp u_LineEnd
+LineHyphen		= LineNameHyphen e_owsp DefinedAs e_owsp (u_DoubleQuotedString / (Number *(u_wsp Number))) e_owsp u_LineEnd
+LineUnder		= LineNameUnder e_owsp DefinedAs e_owsp (u_QuotedString / (Number *(u_wsp Number))) e_owsp u_LineEnd
+LineError		= e_Any u_LineEnd
+LineNameAlpha	= u_alphanum
+LineNameHyphen	= u_alphanum-hyphen
+LineNameUnder	= u_alphanum-under
+DefinedAs		= "="
+Number			= u_Hexidecimal / u_Decimal ; order is important

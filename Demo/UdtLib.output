@@ -1,0 +1,175 @@
+*** LICENSE NOTICE ***
+  APG Version 6.3
+  Copyright (C) 2005 - 2012 Lowell D. Thomas, all rights reserved
+
+  author:  Lowell D. Thomas
+  email:   lowell@coasttocoastresearch.com
+  website: http://www.coasttocoastresearch.com
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*** DEMO UDTLIB ***
+    Tests all functions in the UDT library &
+    demonstrates how they are implemented in an application.
+
+*** TYPE SIZES ***
+     unsigned char: 1
+unsigned short int: 2
+      unsigned int: 4
+ unsigned long int: 8
+         apg_achar: 1
+          apg_uint: 4
+
+*** GRAMMAR INFORMATION ***
+            6.3 = Version
+           9088 = Grammar size in bytes
+             61 = Grammar alphabet character min
+             61 = Grammar alphabet character max
+           1452 = Grammar integer max
+              1 = min sizeof(apg_achar)
+              2 = min sizeof(apg_uint)
+             13 = Number of rules
+             15 = Number of UDTs
+             74 = Number of opcodes
+lineno, offset, length
+000001, 000000, 000001: \x0A
+000002, 000001, 000004:   \x0D\x0A
+000003, 000005, 000005:     \x0D
+000004, 000010, 000033: ; semi comment using CR line end\x0D
+000005, 000043, 000036: // C++ comment using CRLF line end\x0D\x0A
+000006, 000079, 000034: /* C comment using LF line end */\x0A
+000007, 000113, 000025: /* multi-line C comment \x0A
+000008, 000138, 000033: continuing multi-line C comment \x0A
+000009, 000171, 000033:   end of multi-line C comment */\x0A
+000010, 000204, 000001: \x0A
+000011, 000205, 000023: // alphanum named line\x0A
+000012, 000228, 000018: john = 'John Doe'\x0A
+000013, 000246, 000024: mary-jane = "Mary Jane"\x0A
+000014, 000270, 000024: jimmy_bob = "Jimmy Bob"\x0A
+000015, 000294, 000001: \x0A
+000016, 000295, 000024: // test decimal numbers\x0A
+000017, 000319, 000019: number = 123456789\x0A
+000018, 000338, 000026: hexi-decimal = 0x1234ABCD\x0A
+000019, 000364, 000049: multiple_numbers = 123 0xabCD 567 0x1a2A3b4cdEF \x0A
+000020, 000413, 000001: \x0A
+000021, 000414, 000014: ; end of test\x0A
+
+*** PARSER STATE ***
+ TRUE = success
+MATCH = state
+  428 = phrase length
+  428 = string length
+
+*** AST NODES AND PHRASES ***
+    a: this  record number
+    b: other record number
+    c: tree depth
+    d: state: ~=open, M=MATCH, E=EMPTY
+    e: indented operator
+    f: phrase offset
+    g: phrase length
+    h: phrase (... = truncated)
+    a:    b:  c:d: e:f:  g:  h
+-----:-----:---:-:--:-:---:---
+    0:   85:  0:~:File:0:428:\xA  \xD\xA    \xD; semi comment using CR line end\xD// C++ comment using CRLF line end\xD\xA/* C c...
+    1:    2:  1:~: BlankLine:0:1:\xA
+    2:    1:  2:M: BlankLine:0:1:\xA
+    3:    4:  1:~: BlankLine:1:4:  \xD\xA
+    4:    3:  2:M: BlankLine:1:4:  \xD\xA
+    5:    6:  1:~: BlankLine:5:5:    \xD
+    6:    5:  2:M: BlankLine:5:5:    \xD
+    7:    8:  1:~: Comment:10:33:; semi comment using CR line end\xD
+    8:    7:  2:M: Comment:10:33:; semi comment using CR line end\xD
+    9:   10:  1:~: Comment:43:36:// C++ comment using CRLF line end\xD\xA
+   10:    9:  2:M: Comment:43:36:// C++ comment using CRLF line end\xD\xA
+   11:   12:  1:~: Comment:79:34:/* C comment using LF line end */\xA
+   12:   11:  2:M: Comment:79:34:/* C comment using LF line end */\xA
+   13:   14:  1:~: Comment:113:91:/* multi-line C comment \xAcontinuing multi-line C comment \xA  end of multi-line C comment */...
+   14:   13:  2:M: Comment:113:91:/* multi-line C comment \xAcontinuing multi-line C comment \xA  end of multi-line C comment */...
+   15:   16:  1:~: BlankLine:204:1:\xA
+   16:   15:  2:M: BlankLine:204:1:\xA
+   17:   18:  1:~: Comment:205:23:// alphanum named line\xA
+   18:   17:  2:M: Comment:205:23:// alphanum named line\xA
+   19:   34:  1:~: Line:228:66:john = 'John Doe'\xAmary-jane = "Mary Jane"\xAjimmy_bob = "Jimmy Bob"\xA
+   20:   21:  2:~:  LineAlpha:228:18:john = 'John Doe'\xA
+   21:   20:  3:M:  LineAlpha:228:18:john = 'John Doe'\xA
+   22:   27:  2:~:  LineHyphen:246:24:mary-jane = "Mary Jane"\xA
+   23:   24:  3:~:   u_alphanum-hyphen:246:9:mary-jane
+   24:   23:  4:M:   u_alphanum-hyphen:246:9:mary-jane
+   25:   26:  3:~:   u_DoubleQuotedString:258:11:"Mary Jane"
+   26:   25:  4:M:   u_DoubleQuotedString:258:11:"Mary Jane"
+   27:   22:  3:M:  LineHyphen:246:24:mary-jane = "Mary Jane"\xA
+   28:   33:  2:~:  LineUnder:270:24:jimmy_bob = "Jimmy Bob"\xA
+   29:   30:  3:~:   u_alphanum-under:270:9:jimmy_bob
+   30:   29:  4:M:   u_alphanum-under:270:9:jimmy_bob
+   31:   32:  3:~:   u_QuotedString:282:11:"Jimmy Bob"
+   32:   31:  4:M:   u_QuotedString:282:11:"Jimmy Bob"
+   33:   28:  3:M:  LineUnder:270:24:jimmy_bob = "Jimmy Bob"\xA
+   34:   19:  2:M: Line:228:66:john = 'John Doe'\xAmary-jane = "Mary Jane"\xAjimmy_bob = "Jimmy Bob"\xA
+   35:   36:  1:~: BlankLine:294:1:\xA
+   36:   35:  2:M: BlankLine:294:1:\xA
+   37:   38:  1:~: Comment:295:24:// test decimal numbers\xA
+   38:   37:  2:M: Comment:295:24:// test decimal numbers\xA
+   39:   80:  1:~: Line:319:94:number = 123456789\xAhexi-decimal = 0x1234ABCD\xAmultiple_numbers = 123 0xabCD 567 0x1a2A3b4cdEF ...
+   40:   45:  2:~:  LineAlpha:319:19:number = 123456789\xA
+   41:   44:  3:~:   Number:328:9:123456789
+   42:   43:  4:~:    u_Decimal:328:9:123456789
+   43:   42:  5:M:    u_Decimal:328:9:123456789
+   44:   41:  4:M:   Number:328:9:123456789
+   45:   40:  3:M:  LineAlpha:319:19:number = 123456789\xA
+   46:   53:  2:~:  LineHyphen:338:26:hexi-decimal = 0x1234ABCD\xA
+   47:   48:  3:~:   u_alphanum-hyphen:338:12:hexi-decimal
+   48:   47:  4:M:   u_alphanum-hyphen:338:12:hexi-decimal
+   49:   52:  3:~:   Number:353:10:0x1234ABCD
+   50:   51:  4:~:    u_Hexidecimal:353:10:0x1234ABCD
+   51:   50:  5:M:    u_Hexidecimal:353:10:0x1234ABCD
+   52:   49:  4:M:   Number:353:10:0x1234ABCD
+   53:   46:  3:M:  LineHyphen:338:26:hexi-decimal = 0x1234ABCD\xA
+   54:   79:  2:~:  LineUnder:364:49:multiple_numbers = 123 0xabCD 567 0x1a2A3b4cdEF \xA
+   55:   56:  3:~:   u_alphanum-under:364:16:multiple_numbers
+   56:   55:  4:M:   u_alphanum-under:364:16:multiple_numbers
+   57:   60:  3:~:   Number:383:3:123
+   58:   59:  4:~:    u_Decimal:383:3:123
+   59:   58:  5:M:    u_Decimal:383:3:123
+   60:   57:  4:M:   Number:383:3:123
+   61:   62:  3:~:   u_wsp:386:1: 
+   62:   61:  4:M:   u_wsp:386:1: 
+   63:   66:  3:~:   Number:387:6:0xabCD
+   64:   65:  4:~:    u_Hexidecimal:387:6:0xabCD
+   65:   64:  5:M:    u_Hexidecimal:387:6:0xabCD
+   66:   63:  4:M:   Number:387:6:0xabCD
+   67:   68:  3:~:   u_wsp:393:1: 
+   68:   67:  4:M:   u_wsp:393:1: 
+   69:   72:  3:~:   Number:394:3:567
+   70:   71:  4:~:    u_Decimal:394:3:567
+   71:   70:  5:M:    u_Decimal:394:3:567
+   72:   69:  4:M:   Number:394:3:567
+   73:   74:  3:~:   u_wsp:397:1: 
+   74:   73:  4:M:   u_wsp:397:1: 
+   75:   78:  3:~:   Number:398:13:0x1a2A3b4cdEF
+   76:   77:  4:~:    u_Hexidecimal:398:13:0x1a2A3b4cdEF
+   77:   76:  5:M:    u_Hexidecimal:398:13:0x1a2A3b4cdEF
+   78:   75:  4:M:   Number:398:13:0x1a2A3b4cdEF
+   79:   54:  3:M:  LineUnder:364:49:multiple_numbers = 123 0xabCD 567 0x1a2A3b4cdEF \xA
+   80:   39:  2:M: Line:319:94:number = 123456789\xAhexi-decimal = 0x1234ABCD\xAmultiple_numbers = 123 0xabCD 567 0x1a2A3b4cdEF ...
+   81:   82:  1:~: BlankLine:413:1:\xA
+   82:   81:  2:M: BlankLine:413:1:\xA
+   83:   84:  1:~: Comment:414:14:; end of test\xA
+   84:   83:  2:M: Comment:414:14:; end of test\xA
+   85:    0:  1:M:File:0:428:\xA  \xD\xA    \xD; semi comment using CR line end\xD// C++ comment using CRLF line end\xD\xA/* C c...
+
+*** DEMO UDTLIB - test ended successfully ***

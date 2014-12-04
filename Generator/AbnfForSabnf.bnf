@@ -1,0 +1,127 @@
+;*******************************************************************************
+;  Version 6.3
+;  APG - an ABNF Parser Generator
+;  Copyright (C) 2005 - 2012 Lowell D. Thomas, all rights reserved
+;
+;  author:  Lowell D. Thomas
+;  email:   lowell@coasttocoastresearch.com
+;
+;  This program is free software: you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation, either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program.  If not, see
+;  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+;  or write to the Free Software Foundation, Inc.,
+;  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+;*******************************************************************************
+;
+; ABNF for APG 6.3 SABNF
+; Symbol alphabet is ASCII (code points 10, 13, 32-126).
+; SABNF variations from RFC 4234:
+;  restrictions:
+;    incremental alternates, rule2 =/ rule1, are not allowed
+;    prose values, <prose value>, are not allowed
+;    only the first successful alternate, left to right, is accepted (the "prioritized choice" rule)
+;    only the longest possible match to repetitions is accepted
+;
+;  relaxations: 
+;    forgiving line endings - CRLF / LF / CR
+;
+;  super set additions:
+;    syntactic predicate operators, & and !, have been added
+;    User-Defined Terminals of the form, u_rule and e_rule, have been added
+;
+File          = *(BlankLine/Rule/RuleError)
+BlankLine     = LineEnd / (%d59/sp) *(sp / %d33-126) LineEnd
+Rule          = RuleName owsp (IncAlt/DefinedAs) owsp Alternation owsp LineEnd
+RuleError     = *(sp / %d33-126 / LineContinue) LineEnd
+Alternation   = MultipleAlt / SingleAlt
+SingleAlt     = Concatenation
+MultipleAlt   = Concatenation 1*(AltOp Concatenation)
+Concatenation = owsp (MultipleCat / SingleCat)
+SingleCat     = Repetition
+MultipleCat   = Repetition 1*(CatOp Repetition)
+Repetition    = Rep / And / Not / Element
+Rep           = RepOp Element
+And           = AndOp Element
+Not           = NotOp Element
+Element       = TrgOp   /
+                TbsOp   /
+                TlsOp   /
+                UdtOp  /
+                RnmOp   /
+                Group   /
+                Option  /
+                ProsVal
+Group         = Lparen  Alternation Rparen
+Option        = Loption Alternation Roption
+ProsVal       = %d60 *(%d32-61/%d63-126) %d62
+DefinedAs     = %d61
+IncAlt        = %d61.47
+
+RuleName      = alphanum
+RnmOp         = alphanum
+UdtOp         = udt-empty / udt-non-empty
+udt-non-empty = %d117.95 alphanum
+udt-empty     = %d101.95 alphanum
+RepOp         = (rep-min StarOp rep-max) /
+                (rep-min StarOp)         /
+                (StarOp rep-max)         /
+                 StarOp                  /
+                 rep-min-max
+AltOp         = owsp %d47
+CatOp         = wsp
+StarOp        = %d42
+AndOp         = %d38
+NotOp         = %d33
+TrgOp         = %d37 ((Dec dmin %d45 dmax) / (Hex xmin %d45 xmax) / (Bin bmin %d45 bmax))
+TbsOp         = %d37 ((Dec dString *(%d46 dString)) / (Hex xString *(%d46 xString)) / (Bin bString *(%d46 bString)))
+TlsOp         = Ltls *TlsChar Rtls
+TlsChar       = %d32-33/%d35-126 ; tab not allowed
+
+Lparen        = %d40 owsp
+Rparen        = owsp %d41
+Loption       = %d91 owsp
+Roption       = owsp %d93
+rep-min       = rep-num
+rep-min-max   = rep-num
+rep-max       = rep-num
+rep-num       = 1*(%d48-57)
+Ltls          = %d34
+Rtls          = %d34
+dString       = dnum
+xString       = xnum
+bString       = bnum
+Dec           = (%d68/%d100)
+Hex           = (%d88/%d120)
+Bin           = (%d66/%d98)
+dmin          = dnum
+dmax          = dnum
+bmin          = bnum
+bmax          = bnum
+xmin          = xnum
+xmax          = xnum
+dnum          = 1*(%d48-57)
+bnum          = 1*%d48-49
+xnum          = 1*(%d48-57 / %d65-70 / %d97-102)
+
+; Basics
+alphanum      = (%d97-122/%d65-90) *(%d97-122/%d65-90/%d48-57/%d45)
+owsp          = *space
+wsp           = 1*space
+sp            = %d9 / %d32
+space         = sp      /
+                comment /
+                LineContinue
+comment       = %d59 *(sp / %d33-126)
+LineEnd       = %d13.10 / %d10 / %d13
+LineContinue  = (%d13.10 / %d10 / %d13) %d32
+

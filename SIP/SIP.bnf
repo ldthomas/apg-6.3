@@ -1,0 +1,490 @@
+; SIP MESSAGE
+SIP-message       =  BlankSpace (Request / Response) ; forgiving on leading characters
+BlankSpace        = *(%d0-31/%d128-255)
+
+; REQUEST
+Request           =  Request-Line *( message-header ) CRLF [ message-body ]
+Request-Line      =  Method SP Request-URI SP SIP-Version CRLF
+SIP-Version       =  "SIP" "/" 1*DIGIT "." 1*DIGIT
+INVITEm           =  %x49.4E.56.49.54.45 ; INVITE in caps
+ACKm              =  %x41.43.4B ; ACK in caps
+OPTIONSm          =  %x4F.50.54.49.4F.4E.53 ; OPTIONS in caps
+BYEm              =  %x42.59.45 ; BYE in caps
+CANCELm           =  %x43.41.4E.43.45.4C ; CANCEL in caps
+REGISTERm         =  %x52.45.47.49.53.54.45.52 ; REGISTER in caps
+Method            =  INVITEm / ACKm / OPTIONSm / BYEm / CANCELm / REGISTERm / extension-method
+extension-method  =  token
+
+; RESPONSE
+Response          =  Status-Line *( message-header ) CRLF [ message-body ]
+Status-Line       =  SIP-Version SP Status-Code SP Reason-Phrase CRLF
+Status-Code       =  3DIGIT ; to be analyzed semantically (see RFC 3621)
+Reason-Phrase     =  *(reserved / unreserved / escaped / UTF8-NONASCII / UTF8-CONT / WSP)
+
+; SIP URI
+SIP-URI           =  "sip:" [ userinfo ] hostport uri-parameters [ headers ]
+SIPS-URI          =  "sips:" [ userinfo ] hostport uri-parameters [ headers ]
+userinfo          =  ( user / telephone-subscriber ) [ ":" password ] "@"
+user              =  1*( unreserved / escaped / user-unreserved )
+user-unreserved   =  "&" / "=" / "+" / "$" / "," / ";" / "?" / "/"
+password          =  *( unreserved / escaped / "&" / "=" / "+" / "$" / "," )
+hostport          =  host [ ":" port ]
+host              =  hostname / IPv4address / IPv6reference
+hostname          =  *( domainlabel "." &(alphanum/"-")) toplabel [ "." ]
+domainlabel       =  1*alphanum *(1*"-" 1*alphanum)
+toplabel          =  ALPHA *alphanum *(1*"-" 1*alphanum)
+;
+; prioritized-choice will always fail for these rules
+;domainlabel       =  alphanum / alphanum *( alphanum / "-" ) alphanum
+;toplabel          =  ALPHA / ALPHA *( alphanum / "-" ) alphanum
+;
+port              =  1*DIGIT
+uri-parameters    =  *( ";" uri-parameter)
+uri-parameter     =  transport-param / user-param / method-param / ttl-param / maddr-param / lr-param / other-param
+transport-param   =  "transport=" ( "udp" / "tcp" / "sctp" / "tls" / other-transport)
+other-transport   =  token
+user-param        =  "user=" ( "phone" / "ip" / other-user)
+other-user        =  token
+method-param      =  "method=" Method
+ttl-param         =  "ttl=" ttl
+maddr-param       =  "maddr=" host
+lr-param          =  "lr"
+other-param       =  pname [ "=" pvalue ]
+pname             =  1*paramchar
+pvalue            =  1*paramchar
+paramchar         =  param-unreserved / unreserved / escaped
+param-unreserved  =  "[" / "]" / "/" / ":" / "&" / "+" / "$"
+headers           =  "?" header *( "&" header )
+header            =  hname "=" hvalue
+hname             =  1*( hnv-unreserved / unreserved / escaped )
+hvalue            =  *( hnv-unreserved / unreserved / escaped )
+hnv-unreserved    =  "[" / "]" / "/" / "?" / ":" / "+" / "$"
+
+; REQUEST URI
+Request-URI    =  SIP-URI / SIPS-URI / absoluteURI
+absoluteURI    =  scheme ":" ( hier-part / opaque-part )
+hier-part      =  ( net-path / abs-path ) [ "?" query ]
+net-path       =  "//" authority [ abs-path ]
+abs-path       =  "/" path-segments
+opaque-part    =  uric-no-slash *uric
+uric           =  reserved / unreserved / escaped
+uric-no-slash  =  unreserved / escaped / ";" / "?" / ":" / "@" / "&" / "=" / "+" / "$" / ","
+path-segments  =  segment *( "/" segment )
+segment        =  *pchar *( ";" param )
+param          =  *pchar
+pchar          =  unreserved / escaped / ":" / "@" / "&" / "=" / "+" / "$" / ","
+scheme         =  ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+authority      =  srvr / reg-name
+;srvr           =  [ [ userinfo "@" ] hostport ] ; LDT: 07/11/07: I don't think they want two "@" here
+srvr           =  [ [ userinfo ] hostport ]
+reg-name       =  1*( unreserved / escaped / "$" / "," / ";" / ":" / "@" / "&" / "=" / "+" )
+query          =  *uric
+
+; IP ADDRESSES
+IPv4address    =  1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT "." 1*3DIGIT
+IPv6reference  =  "[" IPv6address "]"
+IPv6address    =  *(HEXDIG / ":" / ".") ; to be parsed in semantics
+
+; MESSAGE HEADERS
+message-header      = (  "Accept"                   HCOLON Accept
+                      /  "Accept-Encoding"          HCOLON Accept-Encoding
+                      /  "Accept-Language"          HCOLON Accept-Language
+                      /  "Alert-Info"               HCOLON Alert-Info
+                      /  "Allow"                    HCOLON Allow
+                      /  "Authentication-Info"      HCOLON Authentication-Info
+                      /  "Authorization"            HCOLON Authorization
+                      /  ( "Call-ID" / "i" )        HCOLON Call-ID
+                      /  "Call-Info"                HCOLON Call-Info
+                      /  ("Contact" / "m" )         HCOLON Contact
+                      /  "Content-Disposition"      HCOLON Content-Disposition
+                      /  ("Content-Encoding" / "e") HCOLON Content-Encoding
+                      /  "Content-Language"         HCOLON Content-Language
+                      /  ("Content-Length" / "l")   HCOLON Content-Length
+                      /  ( "Content-Type" / "c" )   HCOLON Content-Type
+                      /  "CSeq"                     HCOLON CSeq
+                      /  "Date"                     HCOLON Date
+                      /  "Error-Info"               HCOLON Error-Info
+                      /  "Expires"                  HCOLON Expires
+                      /  ( "From" / "f" )           HCOLON From
+                      /  "In-Reply-To"              HCOLON In-Reply-To
+                      /  "Max-Forwards"             HCOLON Max-Forwards
+                      /  "MIME-Version"             HCOLON MIME-Version
+                      /  "Min-Expires"              HCOLON Min-Expires
+                      /  "Organization"             HCOLON Organization
+                      /  "Priority"                 HCOLON Priority
+                      /  "Proxy-Authenticate"       HCOLON Proxy-Authenticate
+                      /  "Proxy-Authorization"      HCOLON Proxy-Authorization
+                      /  "Proxy-Require"            HCOLON Proxy-Require
+                      /  "Record-Route"             HCOLON Record-Route
+                      /  "Reply-To"                 HCOLON Reply-To
+                      /  "Require"                  HCOLON Require
+                      /  "Retry-After"              HCOLON Retry-After
+                      /  "Route"                    HCOLON Route
+                      /  "Server"                   HCOLON Server
+                      /  ( "Subject" / "s" )        HCOLON Subject
+                      /  ( "Supported" / "k" )      HCOLON Supported
+                      /  "Timestamp"                HCOLON Timestamp
+                      /  ( "To" / "t" )             HCOLON To
+                      /  "Unsupported"              HCOLON Unsupported
+                      /  "User-Agent"               HCOLON User-Agent
+                      /  ( "Via" / "v" )            HCOLON Via
+                      /  "Warning"                  HCOLON Warning
+                      /  "WWW-Authenticate"         HCOLON WWW-Authenticate
+                      /  header-name                HCOLON extension-header) CRLF
+
+Accept              =  [ accept-range *(COMMA accept-range) ]
+accept-range        =  media-range *(SEMI accept-param)
+;media-range         =  ( "*/*" / ( m-type SLASH "*" ) / ( m-type SLASH m-subtype ) ) *( SEMI m-parameter )
+; LDT 07/11/07: I've left factored (m-type SLASH)
+media-range         =  ( "*/*" / ( m-type SLASH ("*" / m-subtype) ) ) *( SEMI m-parameter )
+accept-param        =  ("q" EQUAL qvalue) / generic-param
+qvalue              =  ( "0" [ "." 0*3DIGIT ] ) / ( "1" [ "." 0*3("0") ] )
+generic-param       =  token [ EQUAL gen-value ]
+gen-value           =  token / host / quoted-string
+
+Accept-Encoding     =  [ encoding *(COMMA encoding) ]
+encoding            =  codings *(SEMI accept-param)
+codings             =  content-coding / "*"
+content-coding      =  token
+
+Accept-Language     =  [ language *(COMMA language) ]
+language            =  language-range *(SEMI accept-param)
+language-range      =  ( ( 1*8ALPHA *( "-" 1*8ALPHA ) ) / "*" )
+
+Alert-Info          =  alert-param *(COMMA alert-param)
+alert-param         =  LAQUOT absoluteURI RAQUOT *( SEMI generic-param )
+
+Allow               =  [Method *(COMMA Method)]
+
+Authorization       =  credentials
+credentials         =  ("Digest" LWS digest-response) / other-response
+digest-response     =  dig-resp *(COMMA dig-resp)
+dig-resp            =  username / realm / nonce / digest-uri
+                      / dresponse / algorithm / cnonce
+                      / opaque / message-qop
+                      / nonce-count / auth-param
+username            =  "username" EQUAL username-value
+username-value      =  quoted-string
+digest-uri          =  "uri" EQUAL LDQUOT digest-uri-value RDQUOT
+digest-uri-value    =  *(%x20-21/%x23-FF)
+;digest-uri-value   =  rquest-uri ; Equal to request-uri as specified by HTTP/1.1
+                       ; any character not double quote (%x22) - see RFC 2068 (HTTP/1.1)
+message-qop         =  "qop" EQUAL qop-value
+cnonce              =  "cnonce" EQUAL cnonce-value
+cnonce-value        =  nonce-value
+nonce-count         =  "nc" EQUAL nc-value
+nc-value            =  8LHEX
+dresponse           =  "response" EQUAL request-digest
+request-digest      =  LDQUOT 32LHEX RDQUOT
+auth-param          =  auth-param-name EQUAL ( token / quoted-string )
+auth-param-name     =  token
+other-response      =  auth-scheme LWS auth-param *(COMMA auth-param)
+auth-scheme         =  token
+
+Authentication-Info =  ainfo *(COMMA ainfo)
+ainfo               =  nextnonce / message-qop / response-auth / cnonce / nonce-count
+nextnonce           =  "nextnonce" EQUAL nonce-value
+response-auth       =  "rspauth" EQUAL response-digest
+response-digest     =  LDQUOT *LHEX RDQUOT
+
+Call-ID             =  word [ "@" word ]
+callid              =  word [ "@" word ]
+
+Call-Info           =  info *(COMMA info)
+info                =  LAQUOT absoluteURI RAQUOT *( SEMI info-param)
+info-param          =  ( "purpose" EQUAL ( "icon" / "info" / "card" / token ) ) / generic-param
+
+Contact             =  ( STAR / (contact-param *(COMMA contact-param)))
+contact-param       =  (name-addr / addr-spec) *(SEMI contact-params)
+; LDT 07/11/07: display-name is an empty string acceptor, optional brackets are unneccessary
+;name-addr           =  [ display-name ] LAQUOT addr-spec RAQUOT
+name-addr           =  display-name LAQUOT addr-spec RAQUOT
+addr-spec           =  SIP-URI / SIPS-URI / absoluteURI
+; LDT 07/11/07: want to identify the display name with a rule name we can find in the parse tree
+;display-name        =  *(token LWS)/ quoted-string
+; LDT 07/11/07: prioritized choice requires quoted-string first
+display-name        =  quoted-string / d-name
+; see comment on optional white space
+; RFC 4475, example 3.1.1.6, pg. 12
+;d-name              =  *(token LWS)
+d-name              =  [token *(LWS token)]
+contact-params      =  c-p-q / c-p-expires / contact-extension
+c-p-q               =  "q" EQUAL qvalue
+c-p-expires         =  "expires" EQUAL delta-seconds
+contact-extension   =  generic-param
+delta-seconds       =  1*DIGIT
+
+Content-Disposition =  disp-type *( SEMI disp-param )
+disp-type           =  "render" / "session" / "icon" / "alert" / disp-extension-token
+disp-param          =  handling-param / generic-param
+handling-param      =  "handling" EQUAL ( "optional" / "required" / other-handling )
+other-handling      =  token
+disp-extension-token=  token
+
+Content-Encoding    =  content-coding *(COMMA content-coding)
+
+Content-Language    =  language-tag *(COMMA language-tag)
+language-tag        =  primary-tag *( "-" subtag )
+primary-tag         =  1*8ALPHA
+subtag              =  1*8ALPHA
+
+Content-Length      =  1*DIGIT
+
+Content-Type        =  media-type
+media-type          =  m-type SLASH m-subtype *(SEMI m-parameter)
+m-type              =  discrete-type / composite-type
+discrete-type       =  "text" / "image" / "audio" / "video" / "application" / extension-token
+composite-type      =  "message" / "multipart" / extension-token
+extension-token     =  ietf-token / x-token
+ietf-token          =  token
+x-token             =  "x-" token
+m-subtype           =  extension-token / iana-token
+iana-token          =  token
+m-parameter         =  m-attribute EQUAL m-value
+m-attribute         =  token
+m-value             =  token / quoted-string
+
+CSeq                =  1*DIGIT LWS Method
+
+Date                =  SIP-date
+SIP-date            =  rfc1123-date
+rfc1123-date        =  wkday "," SP date1 SP time SP "GMT"
+date1               =  2DIGIT SP month SP 4DIGIT ; day month year (e.g., 02 Jun 1982)
+time                =  2DIGIT ":" 2DIGIT ":" 2DIGIT ; 00:00:00 - 23:59:59
+wkday               =  "Mon" / "Tue" / "Wed" / "Thu" / "Fri" / "Sat" / "Sun"
+month               =  "Jan" / "Feb" / "Mar" / "Apr" / "May" / "Jun" / "Jul" / "Aug" / "Sep" / "Oct" / "Nov" / "Dec"
+
+Error-Info          =  error-uri *(COMMA error-uri)
+error-uri           =  LAQUOT absoluteURI RAQUOT *( SEMI generic-param )
+
+Expires             =  delta-seconds
+
+From                =  from-spec
+from-spec           =  ( name-addr / addr-spec ) *( SEMI from-param )
+from-param          =  tag-param / generic-param
+tag-param           =  "tag" EQUAL token
+
+In-Reply-To         =  callid *(COMMA callid)
+
+Max-Forwards        =  1*DIGIT
+
+MIME-Version        =  1*DIGIT "." 1*DIGIT
+
+Min-Expires         =  delta-seconds
+
+Organization        =  [TEXT-UTF8-TRIM]
+
+Priority            =  priority-value
+priority-value      =  "emergency" / "urgent" / "normal" / "non-urgent" / other-priority
+other-priority      =  token
+
+Proxy-Authenticate  =  challenge
+challenge           =  ("Digest" LWS digest-cln *(COMMA digest-cln)) / other-challenge
+other-challenge     =  auth-scheme LWS auth-param *(COMMA auth-param)
+digest-cln          =  realm / domain / nonce / opaque / stale / algorithm / qop-options / auth-param
+realm               =  "realm" EQUAL realm-value
+realm-value         =  quoted-string
+domain              =  "domain" EQUAL LDQUOT URI *( 1*SP URI ) RDQUOT
+URI                 =  absoluteURI / abs-path
+nonce               =  "nonce" EQUAL nonce-value
+nonce-value         =  quoted-string
+opaque              =  "opaque" EQUAL quoted-string
+stale               =  "stale" EQUAL ( "true" / "false" )
+algorithm           =  "algorithm" EQUAL ( "MD5" / "MD5-sess" / token )
+qop-options         =  "qop" EQUAL LDQUOT qop-value *("," qop-value) RDQUOT
+qop-value           =  "auth" / "auth-int" / token
+
+Proxy-Authorization =  credentials
+
+Proxy-Require       =  option-tag *(COMMA option-tag)
+option-tag          =  token
+
+Record-Route        =  rec-route *(COMMA rec-route)
+rec-route           =  name-addr *( SEMI rr-param )
+rr-param            =  generic-param
+
+Reply-To            =  rplyto-spec
+rplyto-spec         =  ( name-addr / addr-spec ) *( SEMI rplyto-param )
+rplyto-param        =  generic-param
+
+Require             =  option-tag *(COMMA option-tag)
+
+Retry-After         =  delta-seconds [ comment ] *( SEMI retry-param )
+retry-param         =  ("duration" EQUAL delta-seconds) / generic-param
+
+Route               =  route-param *(COMMA route-param)
+route-param         =  name-addr *( SEMI rr-param )
+
+Server              =  server-val *(LWS server-val)
+server-val          =  product / comment
+product             =  token [SLASH product-version]
+product-version     =  token
+
+Subject             =  [TEXT-UTF8-TRIM]
+
+Supported           =  [option-tag *(COMMA option-tag)]
+
+Timestamp           =  1*(DIGIT) [ "." *(DIGIT) ] [ LWS delay ]
+delay               =  *(DIGIT) [ "." *(DIGIT) ]
+
+To                  =  ( name-addr / addr-spec ) *( SEMI to-param )
+to-param            =  tag-param / generic-param
+
+Unsupported         =  option-tag *(COMMA option-tag)
+
+User-Agent          =  server-val *(LWS server-val)
+
+Via                 =  via-parm *(COMMA via-parm)
+via-parm            =  sent-protocol LWS sent-by *( SEMI via-params )
+via-params          =  via-ttl / via-maddr / via-received / via-branch / via-extension
+via-ttl             =  "ttl" EQUAL ttl
+via-maddr           =  "maddr" EQUAL host
+via-received        =  "received" EQUAL (IPv4address / IPv6address)
+via-branch          =  "branch" EQUAL token
+via-extension       =  generic-param
+sent-protocol       =  protocol-name SLASH protocol-version SLASH transport
+protocol-name       =  "SIP" / token
+protocol-version    =  token
+transport           =  "UDP" / "TCP" / "TLS" / "SCTP" / other-transport
+sent-by             =  host [ COLON port ]
+ttl                 =  1*3DIGIT ; 0 to 255
+
+Warning             =  warning-value *(COMMA warning-value)
+warning-value       =  warn-code SP warn-agent SP warn-text
+warn-code           =  3DIGIT
+warn-agent          =  hostport / pseudonym
+                        ;  the name or pseudonym of the server adding
+                        ;  the Warning header, for use in debugging
+warn-text           =  quoted-string
+pseudonym           =  token
+
+WWW-Authenticate    =  challenge
+extension-header    =  header-value
+header-name         =  token
+header-value        =  *(TEXT-UTF8char / UTF8-CONT / LWS)
+message-body        =  *OCTET
+
+; 2.2 "tel" URL scheme, see [RFC2303]
+; NOTE: domain is defined in RFC1035 and is different that the domain defined above
+telephone-subscriber  = global-phone-number / local-phone-number
+global-phone-number   = "+" base-phone-number [isdn-subaddress] [post-dial] *(area-specifier / service-provider / future-extension)
+base-phone-number     = 1*phonedigit
+local-phone-number    = 1*(phonedigit / dtmf-digit /
+                         pause-character) [isdn-subaddress] [post-dial] area-specifier
+                         *(area-specifier / service-provider / future-extension)
+isdn-subaddress       = ";isub=" 1*phonedigit
+post-dial             = ";postd=" 1*(phonedigit / dtmf-digit / pause-character)
+area-specifier        = ";" phone-context-tag "=" phone-context-ident
+phone-context-tag     = "phone-context"
+phone-context-ident   = network-prefix / private-prefix
+network-prefix        = global-network-prefix / local-network-prefix
+global-network-prefix = "+" 1*phonedigit
+local-network-prefix  = 1*(phonedigit / dtmf-digit / pause-character)
+private-prefix        = (%x21-22 / %x24-27 / %x2C / %x2F / %x3A /
+                        %x3C-40 / %x45-4F / %x51-56 / %x58-60 /
+                        %x65-6F / %x71-76 / %x78-7E)
+                        *(%x21-3A / %x3C-7E)
+                        ; Characters in URLs must follow escaping rules
+                        ; as explained in [RFC2396]
+                        ; See sections 1.2 and 2.5.2
+service-provider      = ";" provider-tag "=" provider-hostname
+provider-tag          = "tsp"
+provider-hostname     = RFC1035domain ; <domain> is defined in [RFC1035] ; See section 2.5.10
+future-extension      = ";" 1*(token-char) ["=" ((1*(token-char) ["?" 1*(token-char)]) / tel-quoted-string )]
+                        ; See section 2.5.11 and [RFC2543]
+token-char            = (%x21 / %x23-27 / %x2A-2B / %x2D-2E / %x30-39 / %x41-5A / %x5E-7A / %x7C / %x7E)
+                        ; Characters in URLs must follow escaping rules
+                        ; as explained in [RFC2396]
+                        ; See sections 1.2 and 2.5.11
+tel-quoted-string     = %x22 *( "\" CHAR / (%x20-21 / %x23-7E / %x80-FF )) %x22
+                        ; Characters in URLs must follow escaping rules
+                        ; as explained in [RFC2396]
+                        ; See sections 1.2 and 2.5.11
+phonedigit            = DIGIT / visual-separator
+visual-separator      = "-" / "." / "(" / ")"
+pause-character       = one-second-pause / wait-for-dial-tone
+one-second-pause      = "p"
+wait-for-dial-tone    = "w"
+dtmf-digit            = "*" / "#" / "A" / "B" / "C" / "D"
+
+; RFC 1035
+RFC1035domain = RFC1035subdomain / " "
+
+;RFC1035subdomain = RFC1035label / RFC1035subdomain "." RFC1035label
+RFC1035subdomain = RFC1035label *("." RFC1035label)
+
+; LDT: assuming they want "begin with alpha, alphanum or hyphen, end with alphanum
+;RFC1035label = ALPHA [ [ ldh-str ] alphanum ]
+; prioritized-choice grammar for that
+RFC1035label = ALPHA *alphanum *("-" 1*alphanum)
+
+;ldh-str = alphanum-hyp / alphanum-hyp ldh-str
+;ldh-str = 1*alphanum-hyp
+
+;alphanum-hyp = alphanum / "-"
+
+;alphanum = ALPHA / DIGIT
+;
+;ALPHA = any one of the 52 alphabetic characters A through Z in
+;upper case and a through z in lower case
+;
+;DIGIT = any one of the ten DIGITs 0 through 9
+
+; 25.1 Basic Rules
+alphanum        =  ALPHA / DIGIT
+reserved        =  ";" / "/" / "?" / ":" / "@" / "&" / "=" / "+" / "$" / ","
+unreserved      =  alphanum / mark
+mark            =  "-" / "_" / "." / "!" / "~" / "*" / "'" / "(" / ")"
+escaped         =  "%" HEXDIG HEXDIG
+TEXT-UTF8-TRIM  =  1*TEXT-UTF8char *(LWS 1*TEXT-UTF8char)
+TEXT-UTF8char   =  %x21-7E / UTF8-NONASCII
+UTF8-NONASCII   =  %xC0-DF UTF8-CONT /
+                   %xE0-EF 2UTF8-CONT /
+                   %xF0-F7 3UTF8-CONT /
+                   %xF8-Fb 4UTF8-CONT /
+                   %xFC-FD 5UTF8-CONT
+UTF8-CONT       =  %x80-BF
+token           =  1*(alphanum / "-" / "." / "!" / "%" / "*" / "_" / "+" / "`" / "'" / "~" )
+word            =  1*(alphanum /
+                   "-" / "." / "!" / "%" / "*" / "_" / "+" / "`" / "'" / "~" /
+                    "(" / ")" / "<" / ">" / ":" / "\" / DQUOTE /
+                    "/" / "[" / "]" / "?" / "{" / "}" )
+;HCOLON          =  *( SP / HTAB ) ":" SWS
+HCOLON          =  *WSP ":" SWS
+LHEX            =  DIGIT / %x61-66    ;lowercase a-f
+STAR            =  SWS "*" SWS        ; asterisk
+SLASH           =  SWS "/" SWS        ; slash
+EQUAL           =  SWS "=" SWS        ; equal
+LPAREN          =  SWS "(" SWS        ; left parenthesis
+RPAREN          =  SWS ")" SWS        ; right parenthesis
+RAQUOT          =  ">" SWS            ; right angle quote
+LAQUOT          =  SWS "<"            ; left angle quote
+COMMA           =  SWS "," SWS        ; comma
+SEMI            =  SWS ";" SWS        ; semicolon
+COLON           =  SWS ":" SWS        ; colon
+LDQUOT          =  SWS DQUOTE         ; open double quotation mark
+RDQUOT          =  DQUOTE SWS         ; close double quotation mark
+comment         =  LPAREN *(ctext / quoted-pair / comment) RPAREN
+ctext           =  %x21-27 / %x2A-5B / %x5D-7E / UTF8-NONASCII / LWS
+; LDT 07/11/07: want to be able to identify the string in the parse tree
+;quoted-string   =  SWS DQUOTE *(qdtext / quoted-pair ) DQUOTE
+quoted-string   =  SWS DQUOTE q-string DQUOTE
+q-string        =  *(qdtext / quoted-pair )
+qdtext          =  LWS / %x21 / %x23-5B / %x5D-7E / UTF8-NONASCII
+quoted-pair     =  "\" (%x00-09 / %x0B-0C / %x0E-7F)
+LWS             =  [*WSP CRLF] 1*WSP  ; linear whitespace (one or more line continue or space)
+SWS             =  [LWS]              ; sep (optional) whitespace (zero or more line continue or space)
+WSP             =  %x20 / %x09
+
+; B.1.  Core Rules ; RFC 4234 ABNF October 2005
+ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
+CHAR           =  %x01-7F ; any 7-bit US-ASCII character, ;  excluding NUL
+CR             =  %x0D ; carriage return
+CRLF           =  CR LF / LF / CR; modified to be forgiving on line ender
+DIGIT          =  %x30-39 ; 0-9
+DQUOTE         =  %x22 ; " (Double Quote)
+HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
+LF             =  %x0A ; linefeed
+OCTET          =  %x00-FF ; 8 bits of data
+SP             =  %x20
+

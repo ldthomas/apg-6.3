@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# Parameter $1 is the directory where the binaries are.
+# (do not include trailing backslash, e.g. ".." not "../"
+#
+# The default assumes the parent directory ..
+#
+# test file name ($1) for existence
+filex(){
+if [ ! -f $1 ]; then
+    echo "error: file $1 not found"
+    return 1
+fi
+return 0
+}
+
+# re-generate ($1)
+test(){
+    echo ": this test will re-generate the files"
+    echo ":   CallbacksGrammar.h & CallbacksGrammar.c"
+    echo ":   SetupGrammar.h & SetupGrammar.c"
+    echo ":   UdtlibGrammar.h & UdtlibGrammar.c"
+    echo -n ": are you sure you want to continue? [y/N]:"
+    read answer
+    ex=0
+    if [ "$answer" == "y" ];then
+        ex=1
+    elif [ "$answer" == "Y" ];then
+        ex=1
+    fi 
+    if [ $ex == 1 ];then
+        $1 /in:Callbacks.bnf /C:CallbacksGrammar /dwarnings /dtypes
+        $1 /in:Setup.bnf /C:SetupGrammar /dwarnings /dtypes
+        $1 /in:UdtLib.bnf /C:UdtLibGrammar /dwarnings /dtypes
+    fi
+}
+
+# get the parent directory
+if [ "$1" != "" ]; then
+    dir=$1
+else
+    dir=..
+fi
+
+# test release version
+pgm=$dir/apg
+filex $pgm
+if [ "$?" == "0" ]; then
+    test $pgm
+fi    
+
+exit 0

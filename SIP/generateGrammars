@@ -1,0 +1,57 @@
+#!/bin/bash
+#
+# Parameter $1 is the directory where the binaries are.
+# (do not include trailing backslash, e.g. ".." not "../"
+#
+# The default assumes the parent directory ..
+#
+# test file name ($1) for existence
+filex(){
+if [ ! -f $1 ]; then
+    echo "error: file $1 not found"
+    return 1
+fi
+return 0
+}
+
+# re-generate ($1)
+test(){
+    echo ": this test will re-generate the files"
+    echo ":   Grammar1.c & Grammar1.h"
+    echo ":   Grammar2.c & Grammar2.h"
+    echo ":   Grammar3.c & Grammar3.h"
+    echo ":   Grammar4.c & Grammar4.h"
+    echo ":   Grammar5.c & Grammar5.h"
+    echo -n ": are you sure you want to continue? [y/N]:"
+    read answer
+    ex=0
+    if [ "$answer" == "y" ];then
+        ex=1
+    elif [ "$answer" == "Y" ];then
+        ex=1
+    fi 
+    if [ $ex == 1 ];then
+        $1 /in:Grammar1.bnf /C:Grammar1 /dwarnings /dtypes
+        $1 /in:Grammar2.bnf /C:Grammar2 /dwarnings /dtypes
+        $1 /in:Grammar3.bnf /C:Grammar3 /dwarnings /dtypes
+        $1 /in:Grammar4.bnf /C:Grammar4 /dwarnings /dtypes
+        $1 /in:Grammar5.bnf /C:Grammar5 /dwarnings /dtypes
+        $1 /in:SIP.bnf /C:SIPGrammar /dwarnings /dtypes
+    fi
+}
+
+# get the parent directory
+if [ "$1" != "" ]; then
+    dir=$1
+else
+    dir=..
+fi
+
+# run the test, if possible
+pgm=$dir/apg
+filex $pgm
+if [ "$?" == "0" ]; then
+    test $pgm
+fi    
+
+exit 0

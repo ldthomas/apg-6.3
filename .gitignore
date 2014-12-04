@@ -1,0 +1,35 @@
+*~
+.*
+!.gitignore
+**/documentation
+**/build
+**/autom4te.cache
+**/Debug
+**/Release
+**/RemoteSystemsTempFiles
+*.o
+*.out
+*.zip
+*.gz
+WideCharacters.html
+cmsg
+doxygen_sqlite3.db
+#
+# automake files NOT included
+config.h
+config.log
+config.status
+stamp-h1
+#
+# automake files included
+#aclocal.m4
+#compile
+#config.h.in
+#configure
+#configure.ac
+#depcomp
+#install-sh
+#Makefile.am
+#Makefile.in
+#missing
+

@@ -1,0 +1,6 @@
+;
+; Hello World C++ Demonstration Grammar
+;
+HelloWorld = Hello 1*%d32 u_World [CRLF]
+Hello = "Hello"
+CRLF = %d10

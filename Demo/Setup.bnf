@@ -1,0 +1,41 @@
+;
+; Demo Grammar - simplified, pseudo ABNF for SABNF
+;
+File				= 1*(BlankLine / Line / LineError)
+BlankLine			= owsp LineEnd
+Line				= LineName owsp DefinedAs owsp Alternation owsp LineEnd
+LineError			= Any LineEnd
+LineName			= alphanum
+DefinedAs			= "="
+Alternation			= Concatenation *(owsp AltOp owsp Concatenation)
+Concatenation		= Element *(CatOp Element)
+AltOp				= "/"
+CatOp				= wsp
+Element				= alphanum /
+ 					  HexNum /
+  					  DecNum /
+ 					  QuotedString
+Any					= *(%d9 / %d32-127)
+DecNum				= %d49-57 *%d48-57
+HexNum				= %d48.120 1*(%d48-75 / %d65-70 / %d97-102)
+QuotedString		= SingleQuotedString / DoubleQuotedString
+SingleQuotedString	= %d39 *(%d9 / %d32-38 / %d40-127) %d39
+DoubleQuotedString	= %d34 *(%d9 / %d32-33 / %d35-127) %d34
+
+
+; Basics
+alphanum			= (%d97-122/%d65-90) *(%d97-122/%d65-90/%d48-57/%d45)
+owsp				= *space
+wsp					= 1*space
+sp					= %d9 / %d32
+space				= sp      /
+ 					  Comment /
+ 					  LineContinue
+Comment				= SemiComment / CppComment / CComment
+SemiComment			= %d59 *(sp / %d33-126)
+CppComment			= "//" *(sp / %d33-126)
+CComment			= CBeg *(!CEnd (%d9 / %d32-127 / LineEnd)) CEnd
+CBeg				= "/*"
+CEnd				= "*/"
+LineEnd				= %d13.10 / %d10 / %d13
+LineContinue		= (%d13.10 / %d10 / %d13) %d32

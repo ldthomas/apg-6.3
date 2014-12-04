@@ -1,0 +1,131 @@
+*** LICENSE NOTICE ***
+  APG Version 6.3
+  Copyright (C) 2005 - 2012 Lowell D. Thomas, all rights reserved
+
+  author:  Lowell D. Thomas
+  email:   lowell@coasttocoastresearch.com
+  website: http://www.coasttocoastresearch.com
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 2 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see
+  <http://www.gnu.org/licenses/old-licenses/gpl-2.0.html>
+  or write to the Free Software Foundation, Inc.,
+  51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+*** DEMO SETUP ***
+    Demonstrates the fundamentals of building a parser.
+      - contruction of the parser
+      - handling the input string
+      - examination of the parser state
+      - collecting and viewing parsing statistics
+      - setup and display of the AST
+
+*** TYPE SIZES ***
+     unsigned char: 1
+unsigned short int: 2
+      unsigned int: 4
+ unsigned long int: 8
+         apg_achar: 1
+          apg_uint: 4
+
+*** GRAMMAR INFORMATION ***
+            6.3 = Version
+          12832 = Grammar size in bytes
+              9 = Grammar alphabet character min
+            127 = Grammar alphabet character max
+           1234 = Grammar integer max
+              1 = min sizeof(apg_achar)
+              2 = min sizeof(apg_uint)
+             30 = Number of rules
+              0 = Number of UDTs
+            136 = Number of opcodes
+
+*** INPUT STRING WITH LINE NUMBERS AND CHARACTER OFFSETS ***
+lineno, offset, length
+000001, 000000, 000028: G123ood-name- = alskdjfladk\x0A
+
+*** PARSER STATE ***
+ TRUE = success
+MATCH = state
+   28 = phrase length
+   28 = string length
+
+*** PARSER STATISTICS ***
+        NOMATCH     EMPTY     MATCH     TOTAL : OPERATOR STATISTICS
+  RNM         0         0         0         0
+  UDT         0         0         0         0
+  ALT         0         0         0         0
+  CAT         0         0         0         0
+  REP         0         0         0         0
+  AND         0         0         0         0
+  NOT         0         0         0         0
+  TRG         0         0         0         0
+  TBS         0         0         0         0
+  TLS         0         0         0         0
+TOTAL         0         0         0         0
+
+        NOMATCH     EMPTY     MATCH     TOTAL : RULE/UDT STATISTICS (not sorted, listed by grammar index, rules followed by UDTs)
+
+        NOMATCH     EMPTY     MATCH     TOTAL : RULE/UDT STATISTICS (alphabetically sorted on rule/UDT names)
+
+        NOMATCH     EMPTY     MATCH     TOTAL : RULE/UDT STATISTICS (numerically sorted on total node visits)
+
+*** AST NODES AND PHRASES ***
+    a: this  record number
+    b: other record number
+    c: tree depth
+    d: state: ~=open, M=MATCH, E=EMPTY
+    e: indented operator
+    f: phrase offset
+    g: phrase length
+    h: phrase (... = truncated)
+    a:    b:  c:d: e:f:  g:  h
+-----:-----:---:-:--:-:---:---
+    0:   11:  0:~:File:0:28:G123ood-name- = alskdjfladk\xA
+    1:   10:  1:~: Line:0:28:G123ood-name- = alskdjfladk\xA
+    2:    3:  2:~:  LineName:0:13:G123ood-name-
+    3:    2:  3:M:  LineName:0:13:G123ood-name-
+    4:    9:  2:~:  Alternation:16:11:alskdjfladk
+    5:    8:  3:~:   Concatenation:16:11:alskdjfladk
+    6:    7:  4:~:    Element:16:11:alskdjfladk
+    7:    6:  5:M:    Element:16:11:alskdjfladk
+    8:    5:  4:M:   Concatenation:16:11:alskdjfladk
+    9:    4:  3:M:  Alternation:16:11:alskdjfladk
+   10:    1:  2:M: Line:0:28:G123ood-name- = alskdjfladk\xA
+   11:    0:  1:M:File:0:28:G123ood-name- = alskdjfladk\xA
+
+*** AST TO XML ***
+<?xml version="1.0" encoding="UTF-8"?>
+<root lines="22" nodes="6">
+ <phrase offset="0" length="28">G123ood-name- = alskdjfladk&#x0A;</phrase>
+ <node name="File" id="0">
+  <phrase offset="0" length="28">G123ood-name- = alskdjfladk&#x0A;</phrase>
+  <node name="Line" id="2">
+   <phrase offset="0" length="28">G123ood-name- = alskdjfladk&#x0A;</phrase>
+   <node name="LineName" id="4">
+    <phrase offset="0" length="13">G123ood-name-</phrase>
+   </node><!-- name="LineName" id="4" -->
+   <node name="Alternation" id="6">
+    <phrase offset="16" length="11">alskdjfladk</phrase>
+    <node name="Concatenation" id="7">
+     <phrase offset="16" length="11">alskdjfladk</phrase>
+     <node name="Element" id="10">
+      <phrase offset="16" length="11">alskdjfladk</phrase>
+     </node><!-- name="Element" id="10" -->
+    </node><!-- name="Concatenation" id="7" -->
+   </node><!-- name="Alternation" id="6" -->
+  </node><!-- name="Line" id="2" -->
+ </node><!-- name="File" id="0" -->
+</root>
+
+*** DEMO SETUP - test ended successfully ***
