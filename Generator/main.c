@@ -131,10 +131,6 @@ int main(int argc, char** argv){
 	APG_CALLBACK saSemantic[RULE_COUNT_SABNFGRAMMAR];
 	CM_CONFIG sConfig;
 
-	printf("%u - sizeof(apg_uint)\n", sizeof(apg_uint));
-	printf("%u - sizeof(apg_achar)\n", sizeof(apg_achar));
-	printf("\n");
-
 	while(APG_TRUE){
 		///////////////////////////////////////////////////////////////////////////
 		// SET UP
