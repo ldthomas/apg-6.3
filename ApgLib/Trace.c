@@ -34,7 +34,6 @@
 // just in case we want to provide more flexibility later
 static FILE* spOut = NULL;
 
-//#define APG_TRACE(ctx, op, a, i, off, pl, sl)
 static apg_uint uiIndent(apg_uint uiIndent, char* cpBuffer, apg_uint uiBufferLen);
 static void vTraceBegin(APG_TRACE_CTX* spCtx);
 static void vTraceEnd(APG_TRACE_CTX* spCtx, apg_uint uiPhraseLen);
@@ -48,7 +47,6 @@ static void vEnableRules(apg_uint* uipRules, apg_uint uiCount, apg_uint uiEnable
 static void vEnableDefault(APG_TRACE_CTX* spCtx);
 static apg_uint uiDoTrace(APG_TRACE_CTX* spCtx, APG_OPCODE* spOp, apg_uint uiId);
 
-//static apg_uint uiACharToString(char* cpBuffer, apg_uint uiBufferLen, apg_achar* acpAChar, apg_uint uiACharLen);
 static void vTraceOpRnm(void* vpBuf, char* cpName);
 static void vTraceOpUdt(void* vpBuf, char* cpName);
 static void vTraceOpAlt(void* vpBuf, apg_uint uiChildren);
@@ -191,7 +189,6 @@ static void vEnableDefault(APG_TRACE_CTX* spCtx){
 	if(spCtx->spParserCtx->uiUdtCount){vEnableRules(spCtx->uipUdts, spCtx->spParserCtx->uiUdtCount, APG_TRUE);}
 }
 static void vTraceEnableOp(APG_TRACE_CTX* spCtx, apg_uint uiId, apg_uint uiEnable){
-//	APG_PARSER_CTX* spParserCtx = spCtx->spParserCtx;
 	switch(uiId){
 	case APG_TRACE_ALL:
 		spCtx->uiAlt = uiEnable;
@@ -373,7 +370,6 @@ static void vTraceDown(APG_TRACE_CTX* spCtx, APG_OPCODE* spOp, apg_uint uiId, ap
 	apg_uint uiPhraseLen;
 	vpTest = vpVecPush(spCtx->vpVecRecordStack, (void*)&spCtx->uiRecordNumber);
 	TASSERT(vpTest);
-	printf("vTraceDown: check the input string for integrity:\n");
 	if(uiDoTrace(spCtx, spOp, uiId)){
 		vpPrtBuf = vpStrBufInit(&caPrtBuf[0], sizeof(caPrtBuf));
 		while(APG_TRUE && vpPrtBuf){
@@ -434,7 +430,6 @@ static void vTraceDown(APG_TRACE_CTX* spCtx, APG_OPCODE* spOp, apg_uint uiId, ap
 		fprintf(spOut, "\n");
 	}
 	spCtx->uiRecordNumber++;
-//	spCtx->uiTreeDepth++;
 }
 
 static void vTraceUp(APG_TRACE_CTX* spCtx, APG_OPCODE* spOp, apg_uint uiId, apg_uint uiOffset, apg_uint uiPhraseLen){
@@ -448,7 +443,6 @@ static void vTraceUp(APG_TRACE_CTX* spCtx, APG_OPCODE* spOp, apg_uint uiId, apg_
 	int uiState;
 	const apg_achar* acpPhrase;
 	apg_uint* uipOtherRecord;
-//	spCtx->uiTreeDepth--;
 	uipOtherRecord = (apg_uint*)vpVecPop(spCtx->vpVecRecordStack);
 	TASSERT(uipOtherRecord);
 	if(uiDoTrace(spCtx, spOp, uiId)){
