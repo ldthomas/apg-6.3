@@ -1,4 +1,4 @@
-##APG - An ABNF Parser Generator
+## APG - An ABNF Parser Generator
 
 **Version:** 6.3
 
@@ -27,7 +27,7 @@
 <li>statistics gathering for a full picture of parse tree node coverage</li>
 <li>extensive attribute generation for an overview of the grammar's characteristics</li>
 </ul>
-For more details see the documentation or visit the <a href="http://www.coasttocoastresearch.com">APG website</a>.
+For more details see the documentation or visit the <a href="https://sabnf.com">APG website</a>.
 
 |directories/files:|description|
 |:--------|:----------|  
@@ -112,7 +112,7 @@ cd ../Generator
 **Documentation:**  
 Install [Doxygen](http://www.stack.nl/~dimitri/doxygen/index.html). From the repo directory run
 `doxygen`
-Open `./documentation/index.html` in any web browser. Or visit the [APG website](http://www.coasttocoastresearch.com).
+Open `./documentation/index.html` in any web browser. Or visit the [APG website](https://sabnf.com).
 
 **Copyright:**  
   *Copyright &copy; 2005 - 2012 Lowell D. Thomas, all rights reserved*  
